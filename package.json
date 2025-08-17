@@ -1,0 +1,93 @@
+{
+  "name": "search-by-code-owner",
+  "displayName": "Search by Code Owner",
+  "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, and Gitea",
+  "publisher": "TaigeWang",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
+  },
+  "homepage": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner/blob/main/README.md",
+  "bugs": {
+    "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner/issues",
+    "email": "xiaoxiaobt@gmail.com"
+  },
+  "keywords": [
+    "vscode",
+    "search",
+    "codeowners"
+  ],
+  "engines": {
+    "vscode": "^1.103.0",
+    "node": ">=22.18.0",
+    "pnpm": ">=10.14.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "pricing": "Free",
+  "activationEvents": [
+    "onView:codeOwner.searchView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "search-by-code-owner",
+          "title": "Search by Code Owner",
+          "icon": "$(organization)"
+        }
+      ]
+    },
+    "views": {
+      "search-by-code-owner": [
+        {
+          "id": "codeOwner.searchView",
+          "name": "Code Owner Search",
+          "type": "webview",
+          "when": "true"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codeOwner.refresh",
+        "title": "Refresh",
+        "category": "Search by Code Owner",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "codeOwner.refresh",
+          "when": "view == codeOwner.searchView",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.1",
+    "@types/vscode": "^1.103.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "@vscode/vsce": "^3.6.0",
+    "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "knip": "^5.63.1"
+  }
+}
