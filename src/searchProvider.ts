@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { CodeOwnerService } from "./codeOwnerService";
+import type { GitIgnoreService } from "./gitIgnoreService";
 
 export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codeOwner.searchView";
@@ -8,7 +9,8 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _codeOwnerService: CodeOwnerService
+    private readonly _codeOwnerService: CodeOwnerService,
+    private readonly _gitIgnoreService: GitIgnoreService
   ) {}
 
   public resolveWebviewView(
@@ -36,7 +38,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
           this._sendCodeOwners();
           break;
         case "searchByCodeOwner":
-          this._searchByCodeOwner(data.owner);
+          this._searchByCodeOwner(data.owner, data.hideGitIgnoreFiles);
           break;
         case "reloadCodeOwners":
           this._reloadCodeOwners();
@@ -137,16 +139,20 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
   private async _reloadCodeOwners(): Promise<void> {
     try {
-      const success = await this._codeOwnerService.initialize();
+      const [codeOwnerSuccess, gitIgnoreSuccess] = await Promise.all([
+        this._codeOwnerService.initialize(),
+        this._gitIgnoreService.initialize(),
+      ]);
 
-      if (success) {
+      if (codeOwnerSuccess) {
         // Send updated code owners to webview
         this._sendCodeOwners();
         // Update active file info with new ownership data
         this._sendActiveFileInfo();
 
+        const gitIgnoreStatus = gitIgnoreSuccess ? " and .gitignore" : "";
         vscode.window.showInformationMessage(
-          "CODEOWNERS file reloaded successfully"
+          `CODEOWNERS${gitIgnoreStatus} file(s) reloaded successfully`
         );
       } else {
         vscode.window.showWarningMessage(
@@ -154,12 +160,15 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
         );
       }
     } catch (error) {
-      console.error("Error reloading CODEOWNERS file:", error);
+      console.error("Error reloading files:", error);
       vscode.window.showErrorMessage("Failed to reload CODEOWNERS file");
     }
   }
 
-  private async _searchByCodeOwner(owner: string): Promise<void> {
+  private async _searchByCodeOwner(
+    owner: string,
+    hideGitIgnoreFiles = true
+  ): Promise<void> {
     if (!this._codeOwnerService.hasCodeOwnersFile()) {
       vscode.window.showWarningMessage("No CODEOWNERS file found in workspace");
       return;
@@ -180,6 +189,12 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
         this._codeOwnerService.generateIncludePatterns(owner);
       const excludePatterns =
         this._codeOwnerService.generateExcludePatterns(owner);
+
+      // Add gitignore exclusions if enabled
+      if (hideGitIgnoreFiles && this._gitIgnoreService.hasGitIgnoreFile()) {
+        const gitIgnorePatterns = this._gitIgnoreService.getIgnorePatterns();
+        excludePatterns.push(...gitIgnorePatterns);
+      }
 
       if (includePatterns.length === 0) {
         vscode.window.showInformationMessage(
@@ -315,6 +330,14 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                                         <div class="dropdown-item loading">Loading...</div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="filter-options">
+                                <label class="toggle-container">
+                                    <input type="checkbox" id="hideGitIgnore" checked>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Hide <code>.gitignore</code> files</span>
+                                </label>
                             </div>
                             
                             <button id="searchByOwnerBtn" class="search-button primary large" title="Apply code owner filters to native search (preserves your search query)">

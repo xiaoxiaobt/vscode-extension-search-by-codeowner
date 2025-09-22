@@ -13,12 +13,14 @@
     const dropdownToggle = document.getElementById('dropdownToggle');
 
     const reloadCodeOwnersBtn = document.getElementById('reloadCodeOwners');
+    const hideGitIgnoreToggle = document.getElementById('hideGitIgnore');
     // State
     let hasCodeOwnersFile = false;
     let allOwners = [];
     let filteredOwners = [];
     let selectedOwner = '';
     let isDropdownOpen = false;
+    let hideGitIgnoreFiles = true; // Default to true
     // Initialize the interface
     function initialize() {
         setupEventListeners();
@@ -37,6 +39,8 @@
         codeOwnerInput?.addEventListener('blur', onInputBlur);
         codeOwnerInput?.addEventListener('keydown', onInputKeydown);
         dropdownToggle?.addEventListener('click', onDropdownToggle);
+        // Hide git ignore toggle
+        hideDistToggle?.addEventListener('change', onHideGitIgnoreToggle);
         // Close dropdown when clicking outside
         document.addEventListener('click', onDocumentClick);
     }
@@ -77,9 +81,24 @@
         }
         else if (event.key === 'Enter') {
             event.preventDefault();
+
+            // If dropdown is closed and we have a selected owner, trigger search
+            if (!isDropdownOpen && selectedOwner.trim()) {
+                searchByCodeOwner();
+                return;
+            }
+
+            // Handle dropdown selection
             const selected = codeOwnerDropdown?.querySelector('.dropdown-item.selected');
             if (selected) {
+                // If there's a selected item, use it
                 selectOwner(selected.textContent || '');
+            } else {
+                // If no item is selected, select the first available item
+                const firstItem = codeOwnerDropdown?.querySelector('.dropdown-item:not(.loading):not(.no-results)');
+                if (firstItem) {
+                    selectOwner(firstItem.textContent || '');
+                }
             }
         }
         else if (event.key === 'Escape') {
@@ -191,7 +210,8 @@
         }
         vscode.postMessage({
             type: 'searchByCodeOwner',
-            owner: selectedOwner.trim()
+            owner: selectedOwner.trim(),
+            hideGitIgnoreFiles: hideGitIgnoreFiles
         });
     }
     function reloadCodeOwners() {
@@ -213,6 +233,39 @@
         console.error('Code Owner Search:', message);
         // You could also show a visual error message in the UI
     }
+
+    function onHideGitIgnoreToggle(event) {
+        hideGitIgnoreFiles = event.target.checked;
+    }
+
+    function addBadgeClickHandlers() {
+        const badges = fileCodeOwner?.querySelectorAll('.code-owner-badge.clickable');
+        badges?.forEach(badge => {
+            badge.addEventListener('click', onBadgeClick);
+        });
+    }
+
+    function onBadgeClick(event) {
+        const badge = event.target;
+        const owner = badge.getAttribute('data-owner');
+
+        if (owner && codeOwnerInput) {
+            // Set the selected owner and update the input
+            selectedOwner = owner;
+            codeOwnerInput.value = owner;
+
+            // Close dropdown if open
+            if (isDropdownOpen) {
+                hideDropdown();
+            }
+
+            // Update button state
+            updateButtonState();
+
+            // Automatically apply the owner filters
+            searchByCodeOwner();
+        }
+    }
     function updateActiveFileInfo(data) {
         if (!activeFileDisplay || !fileCodeOwner) {
             return;
@@ -221,11 +274,14 @@
         if (data.codeOwner && !data.codeOwner.isUnowned && data.codeOwner.owners.length > 0) {
             // Show the active file info section
             activeFileDisplay.classList.remove('hidden');
-            // Create owner badges with proper styling
+            // Create clickable owner badges
             const ownerBadges = data.codeOwner.owners.map(owner =>
-                `<span class="code-owner-badge owned">${escapeHtml(owner)}</span>`
+                `<button class="code-owner-badge owned clickable" data-owner="${escapeHtml(owner)}" title="Click to apply ${escapeHtml(owner)} filters">${escapeHtml(owner)}</button>`
             ).join('');
             fileCodeOwner.innerHTML = ownerBadges;
+
+            // Add click handlers to the newly created badges
+            addBadgeClickHandlers();
         }
         else {
             // Hide the active file info section

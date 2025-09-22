@@ -1,15 +1,20 @@
 import * as vscode from "vscode";
 import { CodeOwnerSearchProvider } from "./searchProvider";
 import { CodeOwnerService } from "./codeOwnerService";
+import { GitIgnoreService } from "./gitIgnoreService";
 
 export function activate(context: vscode.ExtensionContext) {
   // Create the code owner service
   const codeOwnerService = new CodeOwnerService();
 
-  // Create the search provider with code owner service
+  // Create the gitignore service
+  const gitIgnoreService = new GitIgnoreService();
+
+  // Create the search provider with services
   const searchProvider = new CodeOwnerSearchProvider(
     context.extensionUri,
-    codeOwnerService
+    codeOwnerService,
+    gitIgnoreService
   );
 
   // Register the webview view provider
@@ -43,8 +48,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(...commands);
 
-  // Initialize code owner service
-  codeOwnerService.initialize().then(() => {
+  // Initialize services
+  Promise.all([
+    codeOwnerService.initialize(),
+    gitIgnoreService.initialize(),
+  ]).then(() => {
     searchProvider.updateActiveFileInfo();
   });
 }

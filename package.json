@@ -3,7 +3,7 @@
   "displayName": "Search by Code Owner",
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, and Gitea",
   "publisher": "TaigeWang",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -79,15 +79,15 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@eslint/js": "^9.35.0",
-    "@types/node": "^22.18.1",
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^22.18.6",
     "@types/vscode": "^1.103.0",
-    "@typescript-eslint/eslint-plugin": "^8.42.0",
-    "@typescript-eslint/parser": "^8.42.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "@vscode/vsce": "^3.6.0",
-    "eslint": "^9.35.0",
+    "eslint": "^9.36.0",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.42.0",
-    "knip": "^5.63.1"
+    "typescript-eslint": "^8.44.1",
+    "knip": "^5.64.0"
   }
 }
