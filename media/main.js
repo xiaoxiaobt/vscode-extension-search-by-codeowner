@@ -40,7 +40,7 @@
         codeOwnerInput?.addEventListener('keydown', onInputKeydown);
         dropdownToggle?.addEventListener('click', onDropdownToggle);
         // Hide git ignore toggle
-        hideDistToggle?.addEventListener('change', onHideGitIgnoreToggle);
+        hideGitIgnoreToggle?.addEventListener('change', onHideGitIgnoreToggle);
         // Close dropdown when clicking outside
         document.addEventListener('click', onDocumentClick);
     }

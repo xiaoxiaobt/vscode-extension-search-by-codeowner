@@ -53,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
     codeOwnerService.initialize(),
     gitIgnoreService.initialize(),
   ]).then(() => {
-    searchProvider.updateActiveFileInfo();
+    searchProvider.initializeData();
   });
 }
 

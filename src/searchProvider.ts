@@ -46,8 +46,14 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    // The webview JavaScript will request data when it's ready,
-    // so we don't need to send it automatically here
+    // Send initial data if services are already initialized
+    if (this._codeOwnerService.hasCodeOwnersFile()) {
+      // Small delay to ensure webview is ready
+      setTimeout(() => {
+        this._sendCodeOwners();
+        this._sendActiveFileInfo();
+      }, 100);
+    }
   }
 
   private _getActiveFileCodeOwner(): {
@@ -119,6 +125,13 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   public updateActiveFileInfo(): void {
     // Only send if webview is available
     if (this._view) {
+      this._sendActiveFileInfo();
+    }
+  }
+
+  public initializeData(): void {
+    if (this._view) {
+      this._sendCodeOwners();
       this._sendActiveFileInfo();
     }
   }
@@ -302,7 +315,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
                 <link href="${styleResetUri}" rel="stylesheet">
                 <link href="${styleVSCodeUri}" rel="stylesheet">
                 <title>Search by Code Owner</title>
@@ -336,7 +349,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                                 <label class="toggle-container">
                                     <input type="checkbox" id="hideGitIgnore" checked>
                                     <span class="toggle-slider"></span>
-                                    <span class="toggle-label">Hide <code>.gitignore</code> files</span>
+                                    <span class="toggle-label">Hide <code>.gitignore</code> ignored patterns</span>
                                 </label>
                             </div>
                             
