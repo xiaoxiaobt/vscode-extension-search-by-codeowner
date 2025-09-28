@@ -238,9 +238,7 @@ export class CodeOwnerService {
     includePatterns: string[];
     excludePatterns: string[];
   } {
-    const unownedPatterns = this.codeOwnerRules
-      .filter((rule) => rule.owners.length === 0)
-      .map((rule) => rule.pattern);
+    const unownedPatterns = this.getUnownedPatterns();
 
     return {
       includePatterns: unownedPatterns.length > 0 ? unownedPatterns : ["**/*"],
@@ -271,12 +269,12 @@ export class CodeOwnerService {
     includePatterns: string[];
     excludePatterns: string[];
   } {
-    // Find all patterns that mention this owner
-    const ownerPatterns = new Set(
-      this.codeOwnerRules
-        .filter((rule) => rule.owners.includes(owner))
-        .map((rule) => rule.pattern)
+    const ownerRules = this.codeOwnerRules.filter((rule) =>
+      rule.owners.includes(owner)
     );
+
+    // Find all patterns that mention this owner
+    const ownerPatterns = new Set(ownerRules.map((rule) => rule.pattern));
 
     if (ownerPatterns.size === 0) {
       return { includePatterns: [], excludePatterns: [] };
@@ -287,9 +285,7 @@ export class CodeOwnerService {
     // but assigns ownership to different owners (excluding the current owner)
     const excludePatterns = new Set<string>();
 
-    for (const ownerRule of this.codeOwnerRules.filter((rule) =>
-      rule.owners.includes(owner)
-    )) {
+    for (const ownerRule of ownerRules) {
       const overridingPatterns = this.findOverridingPatterns(ownerRule, owner);
       overridingPatterns.forEach((overridingPattern) =>
         excludePatterns.add(overridingPattern)
@@ -399,11 +395,11 @@ export class CodeOwnerService {
       .map((rule) => rule.pattern);
   }
 
-  public generateIncludePatterns(owner: string): string[] {
-    const ownership = this.getFilePatternsForOwner(owner);
-
-    // Convert CODEOWNERS patterns to VSCode include patterns
-    return ownership.includePatterns.map((pattern) => {
+  /**
+   * Convert CODEOWNERS patterns to VSCode include patterns
+   */
+  public generateIncludePatterns(includePatterns: string[]): string[] {
+    return includePatterns.map((pattern) => {
       if (pattern === "*") {
         return "**/*";
       }
@@ -425,13 +421,10 @@ export class CodeOwnerService {
   }
 
   /**
-   * Generate VSCode exclude patterns for better precision
-   * This helps exclude files that are overridden by other owners
+   * Convert CODEOWNERS patterns to VSCode exclude patterns
    */
-  public generateExcludePatterns(owner: string): string[] {
-    const ownership = this.getFilePatternsForOwner(owner);
-
-    return ownership.excludePatterns.map((pattern) => {
+  public generateExcludePatterns(excludePatterns: string[]): string[] {
+    return excludePatterns.map((pattern) => {
       if (pattern === "*") {
         return "**/*";
       }

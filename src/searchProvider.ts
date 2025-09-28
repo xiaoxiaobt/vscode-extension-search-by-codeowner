@@ -129,10 +129,10 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   }
 
   private _sendCodeOwners(): void {
-    const allOwners = this._codeOwnerService.getAllOwners();
-    const hasCodeOwnersFile = this._codeOwnerService.hasCodeOwnersFile();
-
     if (this._view) {
+      const allOwners = this._codeOwnerService.getAllOwners();
+      const hasCodeOwnersFile = this._codeOwnerService.hasCodeOwnersFile();
+
       this._view.webview.postMessage({
         type: "codeOwners",
         owners: allOwners,
@@ -189,11 +189,15 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       // Try to read current search state
       const currentSearchState = await this._getCurrentSearchState();
 
+      const ownership = this._codeOwnerService.getFilePatternsForOwner(owner);
+
       // Generate include and exclude patterns for the selected owner
-      const includePatterns =
-        this._codeOwnerService.generateIncludePatterns(owner);
-      const excludePatterns =
-        this._codeOwnerService.generateExcludePatterns(owner);
+      const includePatterns = this._codeOwnerService.generateIncludePatterns(
+        ownership.includePatterns
+      );
+      const excludePatterns = this._codeOwnerService.generateExcludePatterns(
+        ownership.excludePatterns
+      );
 
       // Add gitignore exclusions if enabled
       if (hideGitIgnoreFiles && this._gitIgnoreService.hasGitIgnoreFile()) {

@@ -3,7 +3,7 @@
   "displayName": "Search by Code Owner",
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, and Gitea",
   "publisher": "TaigeWang",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"

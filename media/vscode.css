@@ -125,7 +125,7 @@ body {
 /* Main Action Section */
 .main-action {
 	text-align: center;
-	padding: 20px;
+	padding: 8px 12px;
 	border: 1px solid var(--vscode-widget-border);
 	border-radius: 4px;
 	background: var(--vscode-editor-background);
