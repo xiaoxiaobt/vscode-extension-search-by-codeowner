@@ -1,9 +1,10 @@
-import * as vscode from "vscode";
+import type { ExtensionContext } from "vscode";
+import { window, commands } from "vscode";
 import { CodeOwnerSearchProvider } from "./searchProvider";
 import { CodeOwnerService } from "./codeOwnerService";
 import { GitIgnoreService } from "./gitIgnoreService";
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: ExtensionContext) {
   // Create the code owner service
   const codeOwnerService = new CodeOwnerService();
 
@@ -19,34 +20,31 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register the webview view provider
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      "codeOwner.searchView",
-      searchProvider
-    )
+    window.registerWebviewViewProvider("codeOwner.searchView", searchProvider)
   );
 
   // Listen for active editor changes to update file info
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => {
+    window.onDidChangeActiveTextEditor(() => {
       searchProvider.updateActiveFileInfo();
     })
   );
 
   // Also listen for window state changes (helps with binary files)
   context.subscriptions.push(
-    vscode.window.onDidChangeWindowState(() => {
+    window.onDidChangeWindowState(() => {
       searchProvider.updateActiveFileInfo();
     })
   );
 
   // Register minimal commands
-  const commands = [
-    vscode.commands.registerCommand("codeOwner.refresh", () => {
+  const availableCommands = [
+    commands.registerCommand("codeOwner.refresh", () => {
       searchProvider.refresh();
     }),
   ];
 
-  context.subscriptions.push(...commands);
+  context.subscriptions.push(...availableCommands);
 
   // Initialize services
   Promise.all([

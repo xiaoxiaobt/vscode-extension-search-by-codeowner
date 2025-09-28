@@ -4,7 +4,6 @@ import { relative, join } from "path";
 interface CodeOwnerRule {
   pattern: string;
   owners: string[];
-  lineNumber: number;
 }
 
 interface CodeOwnerInfo {
@@ -90,22 +89,14 @@ export class CodeOwnerService {
       const pattern = parts[0];
       const owners = parts
         .slice(1)
-        .filter((owner) => owner.startsWith("@") || owner.includes("@"))
+        .filter((owner) => owner.includes("@"))
         .map((owner) => owner.trim());
 
       if (owners.length === 0) {
         // Pattern with no owners means "unowned"
-        this.codeOwnerRules.push({
-          pattern,
-          owners: [],
-          lineNumber: i + 1,
-        });
+        this.codeOwnerRules.push({ pattern, owners: [] });
       } else {
-        this.codeOwnerRules.push({
-          pattern,
-          owners,
-          lineNumber: i + 1,
-        });
+        this.codeOwnerRules.push({ pattern, owners });
 
         // Add owners to the set of all owners
         owners.forEach((owner) => this.allOwners.add(owner));
@@ -130,13 +121,10 @@ export class CodeOwnerService {
     const normalizedPath = relativePath.replace(/\\/g, "/"); // Normalize to forward slashes
 
     // Find the last matching rule (highest precedence)
-    let matchingRule: CodeOwnerRule | null = null;
-
-    for (const rule of this.codeOwnerRules) {
-      if (this.matchesPattern(normalizedPath, rule.pattern)) {
-        matchingRule = rule;
-      }
-    }
+    const matchingRule: CodeOwnerRule | undefined =
+      this.codeOwnerRules.findLast((rule) =>
+        this.matchesPattern(normalizedPath, rule.pattern)
+      );
 
     if (!matchingRule) {
       return { owners: [], isUnowned: true };
@@ -284,35 +272,37 @@ export class CodeOwnerService {
     excludePatterns: string[];
   } {
     // Find all patterns that mention this owner
-    const ownerPatterns = this.codeOwnerRules
-      .filter((rule) => rule.owners.includes(owner))
-      .map((rule) => rule.pattern);
+    const ownerPatterns = new Set(
+      this.codeOwnerRules
+        .filter((rule) => rule.owners.includes(owner))
+        .map((rule) => rule.pattern)
+    );
 
-    if (ownerPatterns.length === 0) {
+    if (ownerPatterns.size === 0) {
       return { includePatterns: [], excludePatterns: [] };
     }
 
     // Find patterns that override this owner's patterns
     // Only consider a pattern as overriding if it would match the same files
     // but assigns ownership to different owners (excluding the current owner)
-    const excludePatterns: string[] = [];
+    const excludePatterns = new Set<string>();
 
     for (const ownerRule of this.codeOwnerRules.filter((rule) =>
       rule.owners.includes(owner)
     )) {
       const overridingPatterns = this.findOverridingPatterns(ownerRule, owner);
-      excludePatterns.push(...overridingPatterns);
+      overridingPatterns.forEach((overridingPattern) =>
+        excludePatterns.add(overridingPattern)
+      );
     }
 
     // Remove any exclude patterns that are also include patterns
     // This handles the case where the same pattern appears multiple times with the same owner
-    const deduplicatedExcludes = excludePatterns.filter(
-      (exclude) => !ownerPatterns.includes(exclude)
-    );
+    const deduplicatedExcludes = excludePatterns.difference(ownerPatterns);
 
     return {
-      includePatterns: [...new Set(ownerPatterns)], // Remove duplicates
-      excludePatterns: [...new Set(deduplicatedExcludes)], // Remove duplicates
+      includePatterns: [...ownerPatterns],
+      excludePatterns: [...deduplicatedExcludes],
     };
   }
 

@@ -73,15 +73,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
     const filePath = activeEditor.document.fileName;
     const codeOwnerInfo = this._codeOwnerService.getCodeOwnerForFile(filePath);
 
-    if (codeOwnerInfo.isUnowned) {
-      return {
-        display: "Unowned",
-        owners: [],
-        isUnowned: true,
-      };
-    }
-
-    if (codeOwnerInfo.owners.length === 0) {
+    if (codeOwnerInfo.isUnowned || codeOwnerInfo.owners.length === 0) {
       return {
         display: "Unowned",
         owners: [],
@@ -375,7 +367,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   private _getNonce(): string {
     let text = "";
     const possible =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" as const;
     for (let i = 0; i < 32; i++) {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
