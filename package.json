@@ -3,7 +3,7 @@
   "displayName": "Search by Code Owner",
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, and Gitea",
   "publisher": "TaigeWang",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "icon": "media/logo.png",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
   ],
   "engines": {
     "vscode": "^1.103.0",
-    "node": ">=22.18.0",
+    "node": ">=24.12.0",
     "pnpm": ">=10.20.0"
   },
   "categories": [
@@ -80,15 +80,15 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.0",
-    "@types/node": "^22.18.13",
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^24.10.4",
     "@types/vscode": "^1.103.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
     "@vscode/vsce": "^3.6.2",
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.2",
-    "knip": "^5.67.0"
+    "typescript-eslint": "^8.50.1",
+    "knip": "^5.77.4"
   }
 }

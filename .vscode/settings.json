@@ -7,5 +7,6 @@
     },
     "cSpell.words": [
         "CODEOWNERS"
-    ]
+    ],
+    "npm.packageManager": "pnpm"
 }
