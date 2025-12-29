@@ -3,8 +3,7 @@
   "displayName": "Search by Code Owner",
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, and Gitea",
   "publisher": "TaigeWang",
-  "version": "0.0.8",
-  "icon": "media/logo.png",
+  "version": "0.0.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -28,9 +27,6 @@
     "Other"
   ],
   "pricing": "Free",
-  "activationEvents": [
-    "onView:codeOwner.searchView"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -38,7 +34,7 @@
         {
           "id": "search-by-code-owner",
           "title": "Search by Code Owner",
-          "icon": "media/logo.png"
+          "icon": "media/logo.svg"
         }
       ]
     },
@@ -46,9 +42,10 @@
       "search-by-code-owner": [
         {
           "id": "codeOwner.searchView",
-          "name": "Code Owner Search",
+          "name": "",
           "type": "webview",
-          "when": "true"
+          "when": "true",
+          "icon": "media/logo.svg"
         }
       ]
     },
@@ -77,7 +74,8 @@
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src --ext ts",
     "package": "rm -rf out && vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "dev": "code --extensionDevelopmentPath=$(pwd)"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -85,10 +83,10 @@
     "@types/vscode": "^1.103.0",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.50.1",
-    "@vscode/vsce": "^3.6.2",
+    "@vscode/vsce": "^3.7.1",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.1",
-    "knip": "^5.77.4"
+    "knip": "^5.78.0"
   }
 }

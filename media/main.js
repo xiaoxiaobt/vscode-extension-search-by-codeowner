@@ -70,7 +70,7 @@
         }, 150);
     }
     function onInputKeydown(event) {
-        const items = codeOwnerDropdown?.querySelectorAll('.dropdown-item:not(.loading)');
+        const items = codeOwnerDropdown?.querySelectorAll('.dropdown-item:not(.loading):not(.no-results)');
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             navigateDropdown(items, 1);
@@ -91,13 +91,15 @@
             // Handle dropdown selection
             const selected = codeOwnerDropdown?.querySelector('.dropdown-item.selected');
             if (selected) {
-                // If there's a selected item, use it
-                selectOwner(selected.textContent || '');
+                // If there's a selected item, use its data-owner (fallback to text)
+                const selectedDataOwner = selected.getAttribute('data-owner');
+                selectOwner(selectedDataOwner || selected.textContent || '');
             } else {
                 // If no item is selected, select the first available item
                 const firstItem = codeOwnerDropdown?.querySelector('.dropdown-item:not(.loading):not(.no-results)');
                 if (firstItem) {
-                    selectOwner(firstItem.textContent || '');
+                    const firstDataOwner = firstItem.getAttribute('data-owner');
+                    selectOwner(firstDataOwner || firstItem.textContent || '');
                 }
             }
         }
@@ -160,7 +162,7 @@
             codeOwnerDropdown.innerHTML = '<div class="dropdown-item loading">No owners found</div>';
             return;
         }
-        const html = filteredOwners.map(owner => `<div class="dropdown-item" data-owner="${escapeHtml(owner)}">${escapeHtml(owner)}</div>`).join('');
+        const html = filteredOwners.map(owner => renderOwnerDropdownItem(owner)).join('');
         codeOwnerDropdown.innerHTML = html;
         // Add click handlers to items
         const items = codeOwnerDropdown.querySelectorAll('.dropdown-item');
@@ -172,6 +174,42 @@
                 }
             });
         });
+    }
+
+    function renderOwnerDropdownItem(owner) {
+        const specialLabel = formatSpecialOwnerLabel(owner);
+        if (specialLabel) {
+            return `<div class="dropdown-item dropdown-item--special" data-owner="${escapeHtml(owner)}">${escapeHtml(specialLabel)}</div>`;
+        }
+        const teamInfo = parseTeamOwner(owner);
+        if (!teamInfo) {
+            return `<div class="dropdown-item" data-owner="${escapeHtml(owner)}">${escapeHtml(owner)}</div>`;
+        }
+        return `<div class="dropdown-item dropdown-item--team" data-owner="${escapeHtml(owner)}">
+            <div class="dropdown-item-primary">${escapeHtml(teamInfo.teamName)}</div>
+            <div class="dropdown-item-secondary">
+                <svg class="team-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+                </svg>
+                <span class="dropdown-item-secondary-text">${escapeHtml(teamInfo.orgName)}</span>
+            </div>
+        </div>`;
+    }
+
+    function formatSpecialOwnerLabel(owner) {
+        if (owner === 'Unowned') return 'Unowned';
+        if (owner === 'Owned by all') return 'Owned by all';
+        return null;
+    }
+
+    function parseTeamOwner(owner) {
+        // GitHub team owners commonly look like: @org-name/team-name
+        const match = /^@([^/\s]+)\/([^/\s]+)$/.exec(owner);
+        if (!match) return null;
+        return {
+            orgName: match[1],
+            teamName: match[2],
+        };
     }
     function selectOwner(owner) {
         selectedOwner = owner;
@@ -294,7 +332,7 @@
         filteredOwners = [...allOwners];
         // Add special virtual owners
         if (hasCodeOwnersFile) {
-            allOwners.unshift('unowned', 'owned-by-all');
+            allOwners.unshift('Unowned', 'Owned by all');
             filteredOwners = [...allOwners];
         }
         updateDropdown();

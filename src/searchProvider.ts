@@ -224,27 +224,13 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
           filesToExclude: excludeString,
         });
 
-        let message = `Applied "${owner}" file filters`;
-        if (currentSearchState.query) {
-          message += `\nPreserved query: "${currentSearchState.query}"`;
-        }
-        message += `\nInclude: ${includeString}`;
-        if (excludeString) {
-          message += `\nExclude: ${excludeString}`;
-        }
-
-        vscode.window.showInformationMessage(message);
+        vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
       } catch {
         // Fallback: just focus search input and show patterns
         await vscode.commands.executeCommand(
           "search.action.focusQueryEditorWidget"
         );
-        const patternInfo = excludeString
-          ? `Include: ${includeString}, Exclude: ${excludeString}`
-          : `Include: ${includeString}`;
-        vscode.window.showInformationMessage(
-          `Filters applied for "${owner}". ${patternInfo}`
-        );
+        vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
       }
     } catch (error) {
       console.error("Error applying code owner filters:", error);
@@ -320,7 +306,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                 <div class="search-container">
                     <div class="active-file-info">
                         <div id="activeFileDisplay" class="file-display">
-                            <div class="file-label">Active File Owner(s) </div>
+                            <div class="file-label">Active File Owner(s)</div>
                             <div id="fileCodeOwner" class="code-owner-badges"></div>
                         </div>
                     </div>
@@ -333,10 +319,10 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                             <div class="code-owner-selector">
                                 <label for="codeOwnerInput">Select or Type Code Owner:</label>
                                 <div class="searchable-dropdown">
-                                    <input type="text" id="codeOwnerInput" class="code-owner-input" placeholder="Select or type code owner..." autocomplete="off">
+                                    <input type="text" id="codeOwnerInput" class="code-owner-input" placeholder="Select or type code owner…" autocomplete="off">
                                     <button id="dropdownToggle" class="dropdown-toggle" title="Show all code owners">▼</button>
                                     <div id="codeOwnerDropdown" class="code-owner-dropdown hidden">
-                                        <div class="dropdown-item loading">Loading...</div>
+                                        <div class="dropdown-item loading">Loading…</div>
                                     </div>
                                 </div>
                             </div>
@@ -349,7 +335,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                                 </label>
                             </div>
                             
-                            <button id="searchByOwnerBtn" class="search-button primary large" title="Apply code owner filters to native search (preserves your search query)">
+                            <button id="searchByOwnerBtn" class="search-button" title="Apply code owner filters to native search (preserves your search query)">
                                 Apply Owner Filters
                             </button>
                         </div>

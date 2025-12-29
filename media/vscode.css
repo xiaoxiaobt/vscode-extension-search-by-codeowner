@@ -13,6 +13,7 @@ body {
 /* Search Container */
 .search-container {
 	padding: 16px;
+	padding-left: 20px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -250,9 +251,8 @@ body {
 }
 
 .code-owner-input:disabled {
-	opacity: 0.6;
 	cursor: not-allowed;
-	background: var(--vscode-input-background);
+	background: var(--vscode-disabledForeground);
 }
 
 .dropdown-toggle {
@@ -296,10 +296,60 @@ body {
 }
 
 .dropdown-item {
-	padding: 6px 8px;
+	/* Keep row height consistent even for 2-line team items */
+	height: 32px;
+	padding: 2px 8px;
 	cursor: pointer;
 	font-size: 13px;
 	border-bottom: 1px solid var(--vscode-dropdown-border);
+	text-align: left;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	box-sizing: border-box;
+}
+
+.dropdown-item-primary {
+	font-size: 12px;
+	line-height: 14px;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dropdown-item-secondary {
+	font-size: 10px;
+	line-height: 12px;
+	color: var(--vscode-descriptionForeground);
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-icon {
+	width: 12px;
+	height: 12px;
+	flex: 0 0 auto;
+	fill: currentColor;
+	opacity: 0.9;
+}
+
+.dropdown-item-secondary-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.dropdown-item.selected .dropdown-item-secondary {
+	/* Keep secondary line readable on selection background */
+	color: inherit;
+	opacity: 0.9;
 }
 
 .dropdown-item:last-child {
@@ -316,7 +366,7 @@ body {
 }
 
 .dropdown-item.loading {
-	opacity: 0.6;
+	background: var(--vscode-disabledForeground);
 	cursor: default;
 }
 
@@ -326,7 +376,7 @@ body {
 
 .dropdown-item.no-results {
 	font-style: italic;
-	opacity: 0.6;
+	background: var(--vscode-disabledForeground);
 	cursor: default;
 }
 
@@ -381,11 +431,15 @@ body {
 }
 
 .search-button {
-	width: 28px;
-	height: 28px;
+	min-width: 160px;
+	max-width: 300px;
+	width: auto;
+	height: 40px;
+	padding: 0 20px;
 	border: none;
 	background: transparent;
-	color: var(--vscode-icon-foreground);
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
 	cursor: pointer;
 	border-radius: 3px;
 	display: flex;
@@ -393,64 +447,27 @@ body {
 	justify-self: center;
 	transition: all 0.15s ease-in-out;
 	font-size: 14px;
+	font-weight: 500;
+	gap: 8px;
 	line-height: 1;
 }
 
-.search-button.large {
-	width: auto;
-	height: 40px;
-	padding: 0 20px;
-	font-size: 14px;
-	font-weight: 500;
-	gap: 8px;
-	min-width: 160px;
-}
-
 .search-button:hover {
-	background-color: var(--vscode-toolbar-hoverBackground);
-}
-
-.search-button.primary {
-	background-color: var(--vscode-button-background);
-	color: var(--vscode-button-foreground);
-}
-
-.search-button.primary:hover {
 	background-color: var(--vscode-button-hoverBackground);
 }
 
 .search-button:disabled,
 .search-button.disabled {
-	opacity: 0.4;
+	background: var(--vscode-disabledForeground);
 	cursor: not-allowed;
-}
-
-.search-button.primary:disabled,
-.search-button.primary.disabled {
-	background-color: var(--vscode-button-secondaryBackground);
-	color: var(--vscode-button-secondaryForeground);
-}
-
-/* Responsive Design */
-@media (max-width: 300px) {
-	.search-container {
-		padding: 4px;
-	}
-	
-	.search-input {
-		padding-right: 24px;
-	}
-	
-	.toggle-btn {
-		width: 18px;
-		height: 16px;
-		font-size: 9px;
-	}
 }
 
 /* Focus Management */
 .search-container:focus-within .search-input {
-	border-color: var(--vscode-focusBorder);
+	outline-width: 1px;
+    outline-style: solid;
+    outline-offset: -1px;
+    outline-color: var(--vscode-focusBorder);
 }
 
 @keyframes slideDown {
@@ -466,7 +483,7 @@ body {
 
 /* Loading States */
 .loading {
-	opacity: 0.6;
+	background: var(--vscode-disabledForeground);
 	pointer-events: none;
 }
 
@@ -504,18 +521,18 @@ body {
 }
 
 .reload-button:disabled {
-	opacity: 0.6;
+	background:var(--vscode-disabledForeground);
 	cursor: not-allowed;
 }
 
 /* High Contrast Support */
 @media (prefers-contrast: high) {
 	.search-input {
-		border-width: 2px;
+		border-width: 1px;
 	}
 	
 	.toggle-btn.active {
-		outline: 2px solid var(--vscode-focusBorder);
+		outline: 1px solid var(--vscode-focusBorder);
 		outline-offset: 1px;
 	}
 }

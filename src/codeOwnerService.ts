@@ -220,11 +220,11 @@ export class CodeOwnerService {
     includePatterns: string[];
     excludePatterns: string[];
   } {
-    if (owner === "unowned") {
+    if (owner === "Unowned") {
       return this.getPatternsForUnowned();
     }
 
-    if (owner === "owned-by-all") {
+    if (owner === "Owned by all") {
       return this.getPatternsForAllOwned();
     }
 
