@@ -27,6 +27,8 @@ export class CodeOwnerService {
     ".gitlab/CODEOWNERS",
     // Gitea specific location
     ".gitea/CODEOWNERS",
+    // Bitbucket specific location
+    ".bitbucket/CODEOWNERS",
   ];
 
   public async initialize(): Promise<boolean> {
@@ -57,7 +59,7 @@ export class CodeOwnerService {
   private async parseCodeOwnersFile(filePath: string): Promise<void> {
     try {
       const document = await vscode.workspace.openTextDocument(
-        vscode.Uri.file(filePath)
+        vscode.Uri.file(filePath),
       );
       const content = document.getText();
       this.parseCodeOwnersContent(content);
@@ -111,7 +113,7 @@ export class CodeOwnerService {
 
     // Convert absolute path to relative path from workspace root
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(
-      vscode.Uri.file(filePath)
+      vscode.Uri.file(filePath),
     );
     if (!workspaceFolder) {
       return { owners: [], isUnowned: true };
@@ -123,7 +125,7 @@ export class CodeOwnerService {
     // Find the last matching rule (highest precedence)
     const matchingRule: CodeOwnerRule | undefined =
       this.codeOwnerRules.findLast((rule) =>
-        this.matchesPattern(normalizedPath, rule.pattern)
+        this.matchesPattern(normalizedPath, rule.pattern),
       );
 
     if (!matchingRule) {
@@ -270,7 +272,7 @@ export class CodeOwnerService {
     excludePatterns: string[];
   } {
     const ownerRules = this.codeOwnerRules.filter((rule) =>
-      rule.owners.includes(owner)
+      rule.owners.includes(owner),
     );
 
     // Find all patterns that mention this owner
@@ -288,7 +290,7 @@ export class CodeOwnerService {
     for (const ownerRule of ownerRules) {
       const overridingPatterns = this.findOverridingPatterns(ownerRule, owner);
       overridingPatterns.forEach((overridingPattern) =>
-        excludePatterns.add(overridingPattern)
+        excludePatterns.add(overridingPattern),
       );
     }
 
@@ -307,7 +309,7 @@ export class CodeOwnerService {
    */
   private findOverridingPatterns(
     ownerRule: CodeOwnerRule,
-    owner: string
+    owner: string,
   ): string[] {
     const overrides: string[] = [];
     const ownerRuleIndex = this.codeOwnerRules.indexOf(ownerRule);
