@@ -21,12 +21,21 @@
     let selectedOwner = '';
     let isDropdownOpen = false;
     let hideGitIgnoreFiles = true; // Default to true
+    function showBody() {
+        document.body.style.visibility = 'visible';
+    }
     // Initialize the interface
     function initialize() {
         setupEventListeners();
         requestActiveFileInfo();
         requestCodeOwners();
         updateButtonState(); // Set initial disabled state
+    }
+    if (document.readyState === 'complete') {
+        showBody();
+    }
+    else {
+        window.addEventListener('load', showBody, { once: true });
     }
     function setupEventListeners() {
         // Search functionality
@@ -70,14 +79,11 @@
         }, 150);
     }
     function onInputKeydown(event) {
-        const items = codeOwnerDropdown?.querySelectorAll('.dropdown-item:not(.loading):not(.no-results)');
-        if (event.key === 'ArrowDown') {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
-            navigateDropdown(items, 1);
-        }
-        else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            navigateDropdown(items, -1);
+            showDropdown();
+            const items = codeOwnerDropdown?.querySelectorAll('.dropdown-item:not(.loading):not(.no-results)');
+            navigateDropdown(items, event.key === 'ArrowDown' ? 1 : -1);
         }
         else if (event.key === 'Enter') {
             event.preventDefault();

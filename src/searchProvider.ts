@@ -10,7 +10,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _codeOwnerService: CodeOwnerService,
-    private readonly _gitIgnoreService: GitIgnoreService
+    private readonly _gitIgnoreService: GitIgnoreService,
   ) {}
 
   public resolveWebviewView(
@@ -18,7 +18,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _context: vscode.WebviewViewResolveContext,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _token: vscode.CancellationToken
+    _token: vscode.CancellationToken,
   ) {
     this._view = webviewView;
 
@@ -157,11 +157,11 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
         const gitIgnoreStatus = gitIgnoreSuccess ? " and .gitignore" : "";
         vscode.window.showInformationMessage(
-          `CODEOWNERS${gitIgnoreStatus} file(s) reloaded successfully`
+          `CODEOWNERS${gitIgnoreStatus} file(s) reloaded successfully`,
         );
       } else {
         vscode.window.showWarningMessage(
-          "No CODEOWNERS file found in workspace"
+          "No CODEOWNERS file found in workspace",
         );
       }
     } catch (error) {
@@ -172,7 +172,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
   private async _searchByCodeOwner(
     owner: string,
-    hideGitIgnoreFiles = true
+    hideGitIgnoreFiles = true,
   ): Promise<void> {
     if (!this._codeOwnerService.hasCodeOwnersFile()) {
       vscode.window.showWarningMessage("No CODEOWNERS file found in workspace");
@@ -193,10 +193,10 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
       // Generate include and exclude patterns for the selected owner
       const includePatterns = this._codeOwnerService.generateIncludePatterns(
-        ownership.includePatterns
+        ownership.includePatterns,
       );
       const excludePatterns = this._codeOwnerService.generateExcludePatterns(
-        ownership.excludePatterns
+        ownership.excludePatterns,
       );
 
       // Add gitignore exclusions if enabled
@@ -207,7 +207,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
       if (includePatterns.length === 0) {
         vscode.window.showInformationMessage(
-          `No files found for code owner: ${owner}`
+          `No files found for code owner: ${owner}`,
         );
         return;
       }
@@ -228,14 +228,14 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       } catch {
         // Fallback: just focus search input and show patterns
         await vscode.commands.executeCommand(
-          "search.action.focusQueryEditorWidget"
+          "search.action.focusQueryEditorWidget",
         );
         vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
       }
     } catch (error) {
       console.error("Error applying code owner filters:", error);
       vscode.window.showErrorMessage(
-        `Failed to apply code owner filters: ${error}`
+        `Failed to apply code owner filters: ${error}`,
       );
     }
   }
@@ -251,7 +251,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
       // Focus search query field and try to read it
       await vscode.commands.executeCommand(
-        "search.action.focusQueryEditorWidget"
+        "search.action.focusQueryEditorWidget",
       );
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -282,13 +282,13 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "media", "main.js")
+      vscode.Uri.joinPath(this._extensionUri, "media", "main.js"),
     );
     const styleResetUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")
+      vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"),
     );
     const styleVSCodeUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css")
+      vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"),
     );
     const nonce = this._getNonce();
 
@@ -298,6 +298,11 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <style>
+                  body {
+                    visibility: hidden;
+                  }
+                </style>
                 <link href="${styleResetUri}" rel="stylesheet">
                 <link href="${styleVSCodeUri}" rel="stylesheet">
                 <title>Search by Code Owner</title>

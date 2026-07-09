@@ -19,9 +19,8 @@ input, button, textarea, select {
 button {
     cursor: pointer;
     border: none;
-    outline: none;
 }
 
-input:focus, button:focus {
+button:focus:not(:focus-visible) {
     outline: none;
 }
