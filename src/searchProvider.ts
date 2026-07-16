@@ -1,16 +1,21 @@
 import * as vscode from "vscode";
 import type { CodeOwnerService } from "./codeOwnerService";
 import type { GitIgnoreService } from "./gitIgnoreService";
+import type { ProfileEnrichmentService } from "./profile/profileEnrichmentService";
+import type { OwnerDisplayInfo, PublicProfile } from "./profile/types";
 
 export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codeOwner.searchView";
 
   private _view?: vscode.WebviewView;
+  private _profiles: ReadonlyMap<string, PublicProfile> = new Map();
+  private _profileGeneration = 0;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _codeOwnerService: CodeOwnerService,
     private readonly _gitIgnoreService: GitIgnoreService,
+    private readonly _profileEnrichmentService: ProfileEnrichmentService,
   ) {}
 
   public resolveWebviewView(
@@ -58,7 +63,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
 
   private _getActiveFileCodeOwner(): {
     display: string;
-    owners: string[];
+    owners: OwnerDisplayInfo[];
     isUnowned: boolean;
   } | null {
     const activeEditor = vscode.window.activeTextEditor;
@@ -84,7 +89,9 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
     // Return all owners - display logic will be handled in the UI
     return {
       display: "", // Not used anymore - UI will create badges
-      owners: codeOwnerInfo.owners,
+      owners: codeOwnerInfo.owners.map((owner) =>
+        this._getOwnerDisplayInfo(owner),
+      ),
       isUnowned: false,
     };
   }
@@ -109,9 +116,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   }
 
   public refresh(): void {
-    if (this._view) {
-      this._view.webview.html = this._getHtmlForWebview(this._view.webview);
-    }
+    void this._reloadCodeOwners();
   }
 
   public updateActiveFileInfo(): void {
@@ -126,11 +131,18 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       this._sendCodeOwners();
       this._sendActiveFileInfo();
     }
+    void this._updateProfileEnrichment();
+  }
+
+  public updateProfileEnrichment(): void {
+    void this._updateProfileEnrichment();
   }
 
   private _sendCodeOwners(): void {
     if (this._view) {
-      const allOwners = this._codeOwnerService.getAllOwners();
+      const allOwners = this._codeOwnerService
+        .getAllOwners()
+        .map((owner) => this._getOwnerDisplayInfo(owner));
       const hasCodeOwnersFile = this._codeOwnerService.hasCodeOwnersFile();
 
       this._view.webview.postMessage({
@@ -150,6 +162,7 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       ]);
 
       if (codeOwnerSuccess) {
+        await this._updateProfileEnrichment();
         // Send updated code owners to webview
         this._sendCodeOwners();
         // Update active file info with new ownership data
@@ -167,6 +180,55 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
     } catch (error) {
       console.error("Error reloading files:", error);
       vscode.window.showErrorMessage("Failed to reload CODEOWNERS file");
+    }
+  }
+
+  private _getOwnerDisplayInfo(owner: string): OwnerDisplayInfo {
+    const profile = this._profiles.get(owner);
+    return {
+      owner,
+      ...(profile
+        ? {
+            username: profile.username,
+            ...(profile.name ? { displayName: profile.name } : {}),
+          }
+        : {}),
+    };
+  }
+
+  private async _updateProfileEnrichment(): Promise<void> {
+    const generation = ++this._profileGeneration;
+    const codeOwnersFilePath = this._codeOwnerService.getCodeOwnersFilePath();
+    const resource = codeOwnersFilePath
+      ? vscode.Uri.file(codeOwnersFilePath)
+      : undefined;
+    const enabled = vscode.workspace
+      .getConfiguration("searchByCodeOwner", resource)
+      .get<boolean>("fetchGitHubUserInfo", false);
+
+    if (!enabled || !codeOwnersFilePath) {
+      this._profiles = new Map();
+      this._sendCodeOwners();
+      this._sendActiveFileInfo();
+      return;
+    }
+
+    try {
+      await this._profileEnrichmentService.enrich(
+        this._codeOwnerService.getAllOwners(),
+        codeOwnersFilePath,
+        (profiles) => {
+          if (generation !== this._profileGeneration) {
+            return;
+          }
+          this._profiles = profiles;
+          this._sendCodeOwners();
+          this._sendActiveFileInfo();
+        },
+        () => generation === this._profileGeneration,
+      );
+    } catch {
+      // Profile enrichment is optional and must never interrupt CODEOWNERS use.
     }
   }
 

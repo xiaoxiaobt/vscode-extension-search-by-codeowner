@@ -61,7 +61,9 @@
             filteredOwners = [...allOwners];
         }
         else {
-            filteredOwners = allOwners.filter(owner => owner.toLowerCase().includes(query));
+            filteredOwners = allOwners.filter(owner =>
+                owner.owner.toLowerCase().includes(query) ||
+                (owner.displayName || '').toLowerCase().includes(query));
         }
         updateDropdown();
         showDropdown();
@@ -182,14 +184,23 @@
         });
     }
 
-    function renderOwnerDropdownItem(owner) {
+    function renderOwnerDropdownItem(ownerInfo) {
+        const owner = ownerInfo.owner;
         const specialLabel = formatSpecialOwnerLabel(owner);
         if (specialLabel) {
             return `<div class="dropdown-item dropdown-item--special" data-owner="${escapeHtml(owner)}">${escapeHtml(specialLabel)}</div>`;
         }
         const teamInfo = parseTeamOwner(owner);
-        if (!teamInfo) {
+        if (!teamInfo && !ownerInfo.displayName) {
             return `<div class="dropdown-item" data-owner="${escapeHtml(owner)}">${escapeHtml(owner)}</div>`;
+        }
+        if (!teamInfo) {
+            return `<div class="dropdown-item dropdown-item--user" data-owner="${escapeHtml(owner)}">
+                <div class="dropdown-item-primary">${escapeHtml(owner)}</div>
+                <div class="dropdown-item-secondary">
+                    <span class="dropdown-item-secondary-text">${escapeHtml(ownerInfo.displayName)}</span>
+                </div>
+            </div>`;
         }
         return `<div class="dropdown-item dropdown-item--team" data-owner="${escapeHtml(owner)}">
             <div class="dropdown-item-primary">${escapeHtml(teamInfo.teamName)}</div>
@@ -319,9 +330,13 @@
             // Show the active file info section
             activeFileDisplay.classList.remove('hidden');
             // Create clickable owner badges
-            const ownerBadges = data.codeOwner.owners.map(owner =>
-                `<button class="code-owner-badge owned clickable" data-owner="${escapeHtml(owner)}" title="Click to apply ${escapeHtml(owner)} filters">${escapeHtml(owner)}</button>`
-            ).join('');
+            const ownerBadges = data.codeOwner.owners.map(ownerInfo => {
+                const owner = ownerInfo.owner;
+                const label = ownerInfo.displayName
+                    ? `${owner} (${ownerInfo.displayName})`
+                    : owner;
+                return `<button class="code-owner-badge owned clickable" data-owner="${escapeHtml(owner)}" title="Click to apply ${escapeHtml(owner)} filters">${escapeHtml(label)}</button>`;
+            }).join('');
             fileCodeOwner.innerHTML = ownerBadges;
 
             // Add click handlers to the newly created badges
@@ -338,7 +353,7 @@
         filteredOwners = [...allOwners];
         // Add special virtual owners
         if (hasCodeOwnersFile) {
-            allOwners.unshift('Unowned', 'Owned by all');
+            allOwners.unshift({ owner: 'Unowned' }, { owner: 'Owned by all' });
             filteredOwners = [...allOwners];
         }
         updateDropdown();
