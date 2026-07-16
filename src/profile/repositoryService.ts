@@ -21,15 +21,17 @@ export class RepositoryService {
           "HEAD",
         ]),
       );
-      const remoteName = clean(
-        await this.git(rootPath, [
-          "config",
-          "--get",
-          `branch.${branch}.remote`,
-        ]),
-      );
+      const configuredRemote = await this.readOptional(rootPath, [
+        "config",
+        "--get",
+        `branch.${branch}.remote`,
+      ]);
+      const remoteName =
+        configuredRemote && configuredRemote !== "."
+          ? configuredRemote
+          : "origin";
 
-      if (!rootPath || !branch || !remoteName || remoteName === ".") {
+      if (!rootPath || !branch) {
         return null;
       }
 
@@ -46,6 +48,17 @@ export class RepositoryService {
       return null;
     }
   }
+
+  private async readOptional(
+    cwd: string,
+    args: readonly string[],
+  ): Promise<string | null> {
+    try {
+      return clean(await this.git(cwd, args)) || null;
+    } catch {
+      return null;
+    }
+  }
 }
 
 export function parseRemoteHost(remoteUrl: string): string | null {
@@ -56,7 +69,7 @@ export function parseRemoteHost(remoteUrl: string): string | null {
 
   try {
     const url = new URL(value);
-    if (!url.hostname || !["https:", "http:", "ssh:", "git:"].includes(url.protocol)) {
+    if (!url.hostname || !["https:", "ssh:"].includes(url.protocol)) {
       return null;
     }
     return url.hostname.toLowerCase();
