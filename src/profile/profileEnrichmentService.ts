@@ -1,3 +1,7 @@
+import type {
+  CommitIdentityLookup,
+  CommitIdentityService,
+} from "./commitIdentityService";
 import type { ProfileCache } from "./profileCache";
 import type { PublicProfileProvider } from "./publicProfileProvider";
 import type { RepositoryService } from "./repositoryService";
@@ -17,6 +21,7 @@ export class ProfileEnrichmentService {
     private readonly cache: ProfileCache,
     private readonly repositoryService: RepositoryService,
     private readonly providers: readonly PublicProfileProvider[],
+    private readonly commitIdentityService: CommitIdentityService,
     private readonly concurrency = 3,
   ) {}
 
@@ -41,6 +46,13 @@ export class ProfileEnrichmentService {
     }
 
     const eligibleOwners = uniqueEligibleOwners(owners, provider);
+    if (eligibleOwners.length === 0) {
+      onUpdate(new Map());
+      return;
+    }
+    const commitIdentities = await this.commitIdentityService.load(
+      repository.rootPath,
+    );
     const profiles = new Map<string, PublicProfile>();
     const missing: EligibleOwner[] = [];
 
@@ -53,7 +65,7 @@ export class ProfileEnrichmentService {
       }
     }
 
-    onUpdate(new Map(profiles));
+    publishProfiles(profiles, commitIdentities, onUpdate);
 
     let nextIndex = 0;
     let rateLimited = false;
@@ -83,13 +95,32 @@ export class ProfileEnrichmentService {
           result.profile,
         );
         profiles.set(owner.normalizedUsername, result.profile);
-        onUpdate(new Map(profiles));
+        publishProfiles(profiles, commitIdentities, onUpdate);
       }
     };
 
     const workerCount = Math.min(this.concurrency, missing.length);
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
   }
+}
+
+function publishProfiles(
+  profiles: ReadonlyMap<string, PublicProfile>,
+  commitIdentities: CommitIdentityLookup,
+  onUpdate: ProfileUpdateHandler,
+): void {
+  const displayProfiles = new Map<string, PublicProfile>();
+  for (const [username, profile] of profiles) {
+    const commitName =
+      !profile.name && profile.email
+        ? commitIdentities.getName(profile.email)
+        : null;
+    displayProfiles.set(
+      username,
+      commitName ? { ...profile, name: commitName } : profile,
+    );
+  }
+  onUpdate(displayProfiles);
 }
 
 function uniqueEligibleOwners(
