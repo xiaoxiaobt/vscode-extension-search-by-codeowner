@@ -65,7 +65,7 @@
           "type": "boolean",
           "default": false,
           "scope": "resource",
-          "markdownDescription": "Fetch public names, emails, usernames, and avatar URLs for individual code owners from GitHub's public API. Requests are unauthenticated and are not associated with your VS Code GitHub account. Profile results are cached locally in extension storage."
+          "markdownDescription": "Fetch public names, emails, usernames, and avatar URLs for individual code owners from GitHub's public API. Requests are unauthenticated and are not associated with your GitHub account. Profile results are cached locally in extension storage."
         }
       }
     },
@@ -84,6 +84,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
+    "test": "node --test out/test/*.test.js",
     "lint": "eslint src --ext ts",
     "package": "rm -rf out && vsce package",
     "publish": "vsce publish",

@@ -22,5 +22,11 @@ module.exports = [
             'dist/**',
             '**/*.d.ts'
         ]
+    },
+    {
+        files: ['media/**'],
+        languageOptions: {
+            env: { browser: true, es2021: true }
+        }
     }
 ];

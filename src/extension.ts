@@ -1,8 +1,13 @@
 import type { ExtensionContext } from "vscode";
-import { window, commands } from "vscode";
+import { window, commands, workspace } from "vscode";
 import { CodeOwnerSearchProvider } from "./searchProvider";
 import { CodeOwnerService } from "./codeOwnerService";
 import { GitIgnoreService } from "./gitIgnoreService";
+import { CommitIdentityService } from "./profile/commitIdentityService";
+import { GitHubProfileProvider } from "./profile/githubProfileProvider";
+import { ProfileCache } from "./profile/profileCache";
+import { ProfileEnrichmentService } from "./profile/profileEnrichmentService";
+import { RepositoryService } from "./profile/repositoryService";
 
 export function activate(context: ExtensionContext) {
   // Create the code owner service
@@ -11,11 +16,19 @@ export function activate(context: ExtensionContext) {
   // Create the gitignore service
   const gitIgnoreService = new GitIgnoreService();
 
+  const profileEnrichmentService = new ProfileEnrichmentService(
+    new ProfileCache(context.globalState),
+    new RepositoryService(),
+    [new GitHubProfileProvider()],
+    new CommitIdentityService(),
+  );
+
   // Create the search provider with services
   const searchProvider = new CodeOwnerSearchProvider(
     context.extensionUri,
     codeOwnerService,
-    gitIgnoreService
+    gitIgnoreService,
+    profileEnrichmentService,
   );
 
   // Register the webview view provider
@@ -35,6 +48,14 @@ export function activate(context: ExtensionContext) {
     window.onDidChangeWindowState(() => {
       searchProvider.updateActiveFileInfo();
     })
+  );
+
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("searchByCodeOwner.fetchGitHubUserInfo")) {
+        searchProvider.updateProfileEnrichment();
+      }
+    }),
   );
 
   // Register minimal commands

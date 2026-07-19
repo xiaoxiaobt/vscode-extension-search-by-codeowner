@@ -1,5 +1,6 @@
 # Ignore node_modules except for needed packages
 node_modules/
+.pnpm-store/
 
 # Ignore build output (if applicable)
 dist/
@@ -7,6 +8,8 @@ dist/
 # Ignore test files
 **/*.test.ts
 **/*.spec.ts
+out/test/
+docs/
 
 # Ignore configuration or dev files
 .vscode/

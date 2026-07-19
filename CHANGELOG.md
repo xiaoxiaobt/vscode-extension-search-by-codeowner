@@ -2,6 +2,14 @@
 
 What's new in Search by Code Owner.
 
+## Unreleased
+
+- Add an opt-in setting to show public GitHub names beside individual code owners
+- Cache unauthenticated public profile results incrementally in extension storage
+- Use unambiguous local commit identities when GitHub exposes an email but no name
+- Restrict profile requests to the current branch's remote, or `origin` for a
+  local branch, when it points to public GitHub
+
 ## 0.1.2 — 2026-07-09
 
 - Fix bug where button focus outline was not visible
