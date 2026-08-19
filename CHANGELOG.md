@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.1.3 — 2026-08-19
+
+- Fix bug where filters were not applied correctly in some cases
+
 ## 0.1.2 — 2026-07-09
 
 - Fix bug where button focus outline was not visible

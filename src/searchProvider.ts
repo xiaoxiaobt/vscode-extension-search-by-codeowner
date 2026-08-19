@@ -183,12 +183,6 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       // First, open the native search sidebar to ensure it's available
       await vscode.commands.executeCommand("workbench.view.search");
 
-      // Small delay to ensure the search view is ready
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Try to read current search state
-      const currentSearchState = await this._getCurrentSearchState();
-
       const ownership = this._codeOwnerService.getFilePatternsForOwner(owner);
 
       // Generate include and exclude patterns for the selected owner
@@ -212,71 +206,21 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
         return;
       }
 
-      // Preserve current search query and replace text, only modify include/exclude
+      // Omit query so VS Code preserves the user's existing search prompt.
       const includeString = includePatterns.join(",");
       const excludeString = excludePatterns.join(",");
 
-      try {
-        // Simply set the search parameters, preserving only the query
-        await vscode.commands.executeCommand("workbench.action.findInFiles", {
-          query: currentSearchState.query || "",
-          filesToInclude: includeString,
-          filesToExclude: excludeString,
-        });
+      await vscode.commands.executeCommand("workbench.action.findInFiles", {
+        filesToInclude: includeString,
+        filesToExclude: excludeString,
+      });
 
-        vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
-      } catch {
-        // Fallback: just focus search input and show patterns
-        await vscode.commands.executeCommand(
-          "search.action.focusQueryEditorWidget",
-        );
-        vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
-      }
+      vscode.window.showInformationMessage(`Applied "${owner}" file filters`);
     } catch (error) {
       console.error("Error applying code owner filters:", error);
       vscode.window.showErrorMessage(
         `Failed to apply code owner filters: ${error}`,
       );
-    }
-  }
-
-  /**
-   * Attempt to read current search query from native search panel
-   */
-  private async _getCurrentSearchState(): Promise<{ query?: string }> {
-    try {
-      // Try to use clipboard method to read current search query
-      const originalClipboard = await vscode.env.clipboard.readText();
-      let currentQuery = "";
-
-      // Focus search query field and try to read it
-      await vscode.commands.executeCommand(
-        "search.action.focusQueryEditorWidget",
-      );
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Select all and copy to get current query
-      await vscode.commands.executeCommand("editor.action.selectAll");
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const queryText = await vscode.env.clipboard.readText();
-      if (queryText && queryText !== originalClipboard) {
-        currentQuery = queryText;
-      }
-
-      // Restore original clipboard
-      await vscode.env.clipboard.writeText(originalClipboard);
-
-      const result = {
-        query: currentQuery,
-      };
-
-      return result;
-    } catch (error) {
-      console.warn("Could not read current search state:", error);
-      return {};
     }
   }
 
