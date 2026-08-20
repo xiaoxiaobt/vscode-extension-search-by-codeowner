@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import type { CodeOwnerService } from "./codeOwnerService";
 import type { GitIgnoreService } from "./gitIgnoreService";
+import { rewritePatternsForWorkspaceFolders } from "./workspaceSupport";
 
 export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codeOwner.searchView";
@@ -186,16 +187,22 @@ export class CodeOwnerSearchProvider implements vscode.WebviewViewProvider {
       const ownership = this._codeOwnerService.getFilePatternsForOwner(owner);
 
       // Generate include and exclude patterns for the selected owner
-      const includePatterns = this._codeOwnerService.generateIncludePatterns(
-        ownership.includePatterns,
+      const includePatterns = rewritePatternsForWorkspaceFolders(
+        this._codeOwnerService.generateIncludePatterns(
+          ownership.includePatterns,
+        ),
       );
-      const excludePatterns = this._codeOwnerService.generateExcludePatterns(
-        ownership.excludePatterns,
+      const excludePatterns = rewritePatternsForWorkspaceFolders(
+        this._codeOwnerService.generateExcludePatterns(
+          ownership.excludePatterns,
+        ),
       );
 
       // Add gitignore exclusions if enabled
       if (hideGitIgnoreFiles && this._gitIgnoreService.hasGitIgnoreFile()) {
-        const gitIgnorePatterns = this._gitIgnoreService.getIgnorePatterns();
+        const gitIgnorePatterns = rewritePatternsForWorkspaceFolders(
+          this._gitIgnoreService.getIgnorePatterns(),
+        );
         excludePatterns.push(...gitIgnorePatterns);
       }
 

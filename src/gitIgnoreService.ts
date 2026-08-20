@@ -1,19 +1,23 @@
 import * as vscode from "vscode";
 import { join } from "path";
+import {
+  getProjectRootUri,
+  isMultiRootWorkspaceSupportEnabled,
+} from "./workspaceSupport";
 
 export class GitIgnoreService {
   private gitIgnorePatterns: string[] = [];
   private gitIgnoreFilePath: string | null = null;
 
   public async initialize(): Promise<boolean> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const searchRoots = this.getGitIgnoreSearchRoots();
+    if (searchRoots.length === 0) {
       return false;
     }
 
     // Look for .gitignore file in workspace root
-    for (const folder of workspaceFolders) {
-      const filePath = join(folder.uri.fsPath, ".gitignore");
+    for (const rootPath of searchRoots) {
+      const filePath = join(rootPath, ".gitignore");
       try {
         await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
         this.gitIgnoreFilePath = filePath;
@@ -25,6 +29,17 @@ export class GitIgnoreService {
     }
 
     return false;
+  }
+
+  private getGitIgnoreSearchRoots = (): string[] => {
+    const projectRoot = getProjectRootUri();
+    if (isMultiRootWorkspaceSupportEnabled() && projectRoot) {
+      return [projectRoot.fsPath];
+    }
+
+    return (vscode.workspace.workspaceFolders ?? []).map(
+      (folder) => folder.uri.fsPath,
+    );
   }
 
   private async parseGitIgnoreFile(filePath: string): Promise<void> {

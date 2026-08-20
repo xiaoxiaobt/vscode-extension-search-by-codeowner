@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.1.4 — 2026-08-20
+
+- Add experimental setting `codeOwner.experimental.multiRootWorkspace` for `.code-workspace` search filters (multi-root, renamed nested folders, and a single folder whose path is a subdirectory)
+
 ## 0.1.3 — 2026-08-19
 
 - Fix bug where filters were not applied correctly in some cases

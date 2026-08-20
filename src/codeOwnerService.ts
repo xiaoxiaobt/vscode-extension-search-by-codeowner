@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
 import { relative, join } from "path";
+import {
+  getProjectRootUri,
+  isMultiRootWorkspaceSupportEnabled,
+} from "./workspaceSupport";
 
 interface CodeOwnerRule {
   pattern: string;
@@ -32,15 +36,15 @@ export class CodeOwnerService {
   ];
 
   public async initialize(): Promise<boolean> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
+    const searchRoots = this.getCodeOwnersSearchRoots();
+    if (searchRoots.length === 0) {
       return false;
     }
 
     // Find CODEOWNERS file
     for (const location of this.codeownersLocations) {
-      for (const folder of workspaceFolders) {
-        const filePath = join(folder.uri.fsPath, location);
+      for (const rootPath of searchRoots) {
+        const filePath = join(rootPath, location);
         try {
           await vscode.workspace.fs.stat(vscode.Uri.file(filePath));
           this.codeOwnersFilePath = filePath;
@@ -54,6 +58,17 @@ export class CodeOwnerService {
     }
 
     return false;
+  }
+
+  private getCodeOwnersSearchRoots = (): string[] => {
+    const projectRoot = getProjectRootUri();
+    if (isMultiRootWorkspaceSupportEnabled() && projectRoot) {
+      return [projectRoot.fsPath];
+    }
+
+    return (vscode.workspace.workspaceFolders ?? []).map(
+      (folder) => folder.uri.fsPath,
+    );
   }
 
   private async parseCodeOwnersFile(filePath: string): Promise<void> {
@@ -111,15 +126,11 @@ export class CodeOwnerService {
       return { owners: [], isUnowned: true };
     }
 
-    // Convert absolute path to relative path from workspace root
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
-      vscode.Uri.file(filePath),
-    );
-    if (!workspaceFolder) {
+    const relativePath = this.getPathRelativeToCodeOwnersRoot(filePath);
+    if (relativePath === null) {
       return { owners: [], isUnowned: true };
     }
 
-    const relativePath = relative(workspaceFolder.uri.fsPath, filePath);
     const normalizedPath = relativePath.replace(/\\/g, "/"); // Normalize to forward slashes
 
     // Find the last matching rule (highest precedence)
@@ -212,6 +223,24 @@ export class CodeOwnerService {
     const matches = filePath === pattern || filePath.endsWith("/" + pattern);
 
     return matches;
+  }
+
+  private getPathRelativeToCodeOwnersRoot = (
+    filePath: string,
+  ): string | null => {
+    const projectRoot = getProjectRootUri();
+    if (isMultiRootWorkspaceSupportEnabled() && projectRoot) {
+      return relative(projectRoot.fsPath, filePath);
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+      vscode.Uri.file(filePath),
+    );
+    if (!workspaceFolder) {
+      return null;
+    }
+
+    return relative(workspaceFolder.uri.fsPath, filePath);
   }
 
   public getAllOwners(): string[] {

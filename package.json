@@ -4,7 +4,7 @@
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, Gitea, and Bitbucket",
   "publisher": "TaigeWang",
   "icon": "media/logo.png",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -66,6 +66,16 @@
           "group": "navigation"
         }
       ]
+    },
+    "configuration": {
+      "title": "Search by Code Owner",
+      "properties": {
+        "codeOwner.experimental.multiRootWorkspace": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "**(Experimental)** When you open a `.code-workspace` file with multiple folders, or a single folder whose path is not the workspace file directory (for example `./subFolder`), resolve CODEOWNERS from the workspace file directory and rewrite search include/exclude patterns to match VS Code Search roots (including renamed folders)."
+        }
+      }
     }
   },
   "scripts": {
