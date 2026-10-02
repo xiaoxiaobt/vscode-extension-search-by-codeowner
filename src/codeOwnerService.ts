@@ -69,7 +69,7 @@ export class CodeOwnerService {
     return (vscode.workspace.workspaceFolders ?? []).map(
       (folder) => folder.uri.fsPath,
     );
-  }
+  };
 
   private async parseCodeOwnersFile(filePath: string): Promise<void> {
     try {
@@ -241,10 +241,30 @@ export class CodeOwnerService {
     }
 
     return relative(workspaceFolder.uri.fsPath, filePath);
-  }
+  };
 
   public getAllOwners(): string[] {
     return Array.from(this.allOwners).sort();
+  }
+
+  public getMatchingOwners(query: string): string[] {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
+
+    const normalizedQuery = trimmedQuery.toLowerCase();
+    return this.getAllOwners().filter((owner) => {
+      const fullOwner = owner.toLowerCase();
+      const shortOwner = owner.split("/").at(-1)?.toLowerCase() ?? fullOwner;
+      const withoutOrg = fullOwner.replace(/^@[^/]+\//, "");
+
+      return (
+        fullOwner.includes(normalizedQuery) ||
+        shortOwner.includes(normalizedQuery) ||
+        withoutOrg.includes(normalizedQuery)
+      );
+    });
   }
 
   public getFilePatternsForOwner(owner: string): {
@@ -435,12 +455,15 @@ export class CodeOwnerService {
         return "**/*";
       }
 
-      if (pattern.startsWith("/")) {
-        return pattern.slice(1);
+      if (pattern.endsWith("/")) {
+        const directoryPattern = pattern.startsWith("/")
+          ? pattern.slice(1)
+          : pattern;
+        return directoryPattern + "**/*";
       }
 
-      if (pattern.endsWith("/")) {
-        return pattern + "**/*";
+      if (pattern.startsWith("/")) {
+        return pattern.slice(1);
       }
 
       if (pattern.startsWith("*.")) {
@@ -460,12 +483,15 @@ export class CodeOwnerService {
         return "**/*";
       }
 
-      if (pattern.startsWith("/")) {
-        return pattern.slice(1);
+      if (pattern.endsWith("/")) {
+        const directoryPattern = pattern.startsWith("/")
+          ? pattern.slice(1)
+          : pattern;
+        return directoryPattern + "**/*";
       }
 
-      if (pattern.endsWith("/")) {
-        return pattern + "**/*";
+      if (pattern.startsWith("/")) {
+        return pattern.slice(1);
       }
 
       if (pattern.startsWith("*.")) {

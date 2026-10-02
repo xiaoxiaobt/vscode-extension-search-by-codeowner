@@ -3,6 +3,7 @@ import { window, commands } from "vscode";
 import { CodeOwnerSearchProvider } from "./searchProvider";
 import { CodeOwnerService } from "./codeOwnerService";
 import { GitIgnoreService } from "./gitIgnoreService";
+import { CodeOwnerAgentTools } from "./agentTools";
 
 export function activate(context: ExtensionContext) {
   // Create the code owner service
@@ -10,6 +11,15 @@ export function activate(context: ExtensionContext) {
 
   // Create the gitignore service
   const gitIgnoreService = new GitIgnoreService();
+  const initialized = Promise.all([
+    codeOwnerService.initialize(),
+    gitIgnoreService.initialize(),
+  ]);
+
+  // Register agent-callable file listing and content search tools
+  new CodeOwnerAgentTools(codeOwnerService, gitIgnoreService, initialized).register(
+    context,
+  );
 
   // Create the search provider with services
   const searchProvider = new CodeOwnerSearchProvider(
@@ -47,10 +57,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(...availableCommands);
 
   // Initialize services
-  Promise.all([
-    codeOwnerService.initialize(),
-    gitIgnoreService.initialize(),
-  ]).then(() => {
+  initialized.then(() => {
     searchProvider.initializeData();
   });
 }

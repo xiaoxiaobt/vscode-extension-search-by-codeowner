@@ -2,6 +2,16 @@
 
 A VSCode extension that allows you to search for files by code owner with native VSCode search. The extension extracts code owners from CODEOWNERS file. According to your selected code owner, the extension will generate filters in native search panel for you for better search experience.
 
+## AI agent tools
+
+The extension contributes two VS Code Language Model tools for agents:
+
+- List files assigned to a concrete CODEOWNER.
+- Search file contents for a query within files assigned to a concrete CODEOWNER.
+- Find matching CODEOWNERS names from a partial owner string, including values without the org prefix.
+
+Content search supports case sensitivity, regular expressions, and whole-word matching. Both tools can optionally include `.gitignore` and VS Code-excluded files; both exclusions are enabled by default. `Unowned` and `Owned by all` are not supported by the agent tools.
+
 ![Search by Code Owner](./media/screenshot.gif)
 
 ## Settings
