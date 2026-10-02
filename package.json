@@ -4,7 +4,7 @@
   "description": "Search files by code ownership using CODEOWNERS file from GitHub, GitLab, Gitea, and Bitbucket",
   "publisher": "TaigeWang",
   "icon": "media/logo.png",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -22,8 +22,11 @@
   "engines": {
     "vscode": "^1.103.0",
     "node": ">=24.18.0",
-    "pnpm": ">=10.20.0"
+    "pnpm": ">=12.4.1"
   },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "categories": [
     "Other"
   ],
@@ -58,6 +61,119 @@
         "icon": "$(refresh)"
       }
     ],
+    "languageModelTools": [
+      {
+        "name": "codeOwner_listFiles",
+        "toolReferenceName": "codeOwnerListFiles",
+        "canBeReferencedInPrompt": true,
+        "displayName": "List files by code owner",
+        "userDescription": "List workspace files assigned to a concrete CODEOWNER.",
+        "modelDescription": "Return workspace file paths assigned to the exact concrete CODEOWNER supplied in owner according to CODEOWNERS. Preserve the owner string exactly; never substitute another owner based on a file path or a previous request. Unowned files are not supported. Each result includes the file's resolved owners and matching CODEOWNERS pattern. Results can optionally exclude .gitignore and VS Code excluded files.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "owner": {
+              "type": "string",
+              "description": "The exact concrete CODEOWNER requested, such as @org/team. Preserve this value exactly. Do not use Unowned or Owned by all."
+            },
+            "excludeGitIgnore": {
+              "type": "boolean",
+              "description": "Exclude files matched by .gitignore. Defaults to true."
+            },
+            "useVscodeExcludes": {
+              "type": "boolean",
+              "description": "Exclude files hidden by VS Code files.exclude or search.exclude settings. Defaults to true."
+            },
+            "maxResults": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "description": "Maximum number of files to return. Defaults to 1000."
+            }
+          },
+          "required": [
+            "owner"
+          ]
+        }
+      },
+      {
+        "name": "codeOwner_searchFiles",
+        "toolReferenceName": "codeOwnerSearchFiles",
+        "canBeReferencedInPrompt": true,
+        "displayName": "Search files by code owner",
+        "userDescription": "Search the contents of files assigned to a concrete CODEOWNER.",
+        "modelDescription": "Return files assigned to the exact concrete CODEOWNER supplied in owner whose contents match a query. Preserve the owner string exactly; never substitute another owner based on a file path or a previous request. Supports case sensitivity, regular expressions, and whole-word matching. Each result includes the file's resolved owners and matching CODEOWNERS pattern. Unowned files are not supported.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "owner": {
+              "type": "string",
+              "description": "The exact concrete CODEOWNER requested, such as @org/team. Preserve this value exactly. Do not use Unowned or Owned by all."
+            },
+            "query": {
+              "type": "string",
+              "description": "Text or regular expression to find in file contents."
+            },
+            "caseSensitive": {
+              "type": "boolean",
+              "description": "Match letter case exactly. Defaults to false."
+            },
+            "isRegex": {
+              "type": "boolean",
+              "description": "Treat query as a JavaScript regular expression. Defaults to false."
+            },
+            "matchWholeWord": {
+              "type": "boolean",
+              "description": "Require word boundaries around a match. Defaults to false."
+            },
+            "excludeGitIgnore": {
+              "type": "boolean",
+              "description": "Exclude files matched by .gitignore. Defaults to true."
+            },
+            "useVscodeExcludes": {
+              "type": "boolean",
+              "description": "Exclude files hidden by VS Code files.exclude or search.exclude settings. Defaults to true."
+            },
+            "maxResults": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "description": "Maximum number of matching files to return. Defaults to 1000."
+            }
+          },
+          "required": [
+            "owner",
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "codeOwner_findMatchingOwners",
+        "toolReferenceName": "codeOwnerFindMatchingOwners",
+        "canBeReferencedInPrompt": true,
+        "displayName": "Find matching code owners",
+        "userDescription": "Find CODEOWNERS owners whose names match a partial string, even without the org prefix.",
+        "modelDescription": "Return canonical CODEOWNERS owners whose full names, org segments, or local team names contain the supplied partial owner query. Matching is case-insensitive and accepts values such as network, semconv-network, or @open-telemetry/semconv-network-approvers. Results are sorted and can be truncated by maxResults.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Partial owner text to match against CODEOWNERS owners, such as network, semconv-network, or @open-telemetry/semconv-network-approvers."
+            },
+            "maxResults": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "description": "Maximum number of owners to return. Defaults to 1000."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      }
+    ],
     "menus": {
       "view/title": [
         {
@@ -89,15 +205,15 @@
     "dev": "code --extensionDevelopmentPath=$(pwd)"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/node": "^24.13.3",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.13.4",
     "@types/vscode": "^1.103.0",
-    "@typescript-eslint/eslint-plugin": "^8.63.0",
-    "@typescript-eslint/parser": "^8.63.0",
-    "@vscode/vsce": "^3.9.2",
-    "eslint": "^9.39.2",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.0",
+    "@vscode/vsce": "^4.0.0",
+    "eslint": "^10.10.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.63.0",
-    "knip": "^6.25.0"
+    "typescript-eslint": "^8.70.0",
+    "knip": "^6.35.0"
   }
 }

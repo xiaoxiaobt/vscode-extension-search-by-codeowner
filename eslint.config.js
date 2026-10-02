@@ -17,6 +17,22 @@ module.exports = [
         }
     },
     {
+        files: ['media/**/*.js'],
+        languageOptions: {
+            globals: {
+                window: 'readonly',
+                document: 'readonly',
+                console: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                HTMLElement: 'readonly',
+                NodeList: 'readonly',
+                Event: 'readonly',
+                CustomEvent: 'readonly'
+            }
+        }
+    },
+    {
         ignores: [
             'out/**',
             'dist/**',

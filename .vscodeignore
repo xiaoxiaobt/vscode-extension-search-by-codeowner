@@ -22,3 +22,6 @@ pnpm-lock.yaml
 
 # Ignore source files if you're bundling
 src/
+.pnpm-store/
+docs/
+CODEOWNERS

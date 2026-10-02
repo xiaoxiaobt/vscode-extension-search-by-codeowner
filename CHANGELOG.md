@@ -2,6 +2,11 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.0 — 2026-10-03
+
+- Add VS Code Language Model tools to list and search files assigned to a concrete CODEOWNER
+- Add agent search options for case sensitivity, regular expressions, whole-word matching, and file exclusions
+
 ## 0.1.4 — 2026-08-20
 
 - Add experimental setting `codeOwner.experimental.multiRootWorkspace` for `.code-workspace` search filters (multi-root, renamed nested folders, and a single folder whose path is a subdirectory)
