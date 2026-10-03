@@ -2,6 +2,12 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.1 — 2026-10-03
+
+- Include license in package.json
+- Update README.md
+- Use trusted publishing for Open VSX Marketplace
+
 ## 0.2.0 — 2026-10-03
 
 - Add VS Code Language Model tools to list and search files assigned to a concrete CODEOWNER

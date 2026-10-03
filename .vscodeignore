@@ -25,3 +25,4 @@ src/
 .pnpm-store/
 docs/
 CODEOWNERS
+.github/

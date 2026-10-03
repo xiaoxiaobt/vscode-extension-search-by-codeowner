@@ -1,0 +1,103 @@
+name: Publish to Open VSX
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-openvsx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.4.1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run compile
+
+      - name: Detect version bump
+        id: version
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+
+          const currentVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+          const previousVersion = JSON.parse(
+            execFileSync('git', ['show', 'HEAD^:package.json'], { encoding: 'utf8' })
+          ).version;
+
+          const parseVersion = (version) => {
+            const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?/);
+            if (!match) {
+              throw new Error(`Invalid extension version: ${version}`);
+            }
+            return [Number(match[1]), Number(match[2]), Number(match[3]), match[4] ?? ''];
+          };
+
+          const compareVersions = (left, right) => {
+            const leftParts = parseVersion(left);
+            const rightParts = parseVersion(right);
+            for (let index = 0; index < 3; index += 1) {
+              if (leftParts[index] !== rightParts[index]) {
+                return leftParts[index] - rightParts[index];
+              }
+            }
+            if (!leftParts[3] && rightParts[3]) return 1;
+            if (leftParts[3] && !rightParts[3]) return -1;
+            return leftParts[3].localeCompare(rightParts[3]);
+          };
+
+          const bumped = compareVersions(currentVersion, previousVersion) > 0;
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `bumped=${bumped}\n`);
+          console.log(`${previousVersion} -> ${currentVersion}; publish=${bumped}`);
+          NODE
+
+      - name: Check version is unpublished
+        id: published
+        if: steps.version.outputs.bumped == 'true'
+        shell: bash
+        run: |
+          publisher=$(node -p "require('./package.json').publisher")
+          extension=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          url="https://open-vsx.org/api/${publisher}/${extension}/${version}"
+          http_status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$url")
+
+          case "$http_status" in
+            404)
+              echo 'exists=false' >> "$GITHUB_OUTPUT"
+              echo "${publisher}.${extension} ${version} is not published"
+              ;;
+            200)
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              echo "${publisher}.${extension} ${version} is already published"
+              ;;
+            *)
+              echo "Unexpected Open VSX response: HTTP ${http_status}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Publish to Open VSX
+        if: steps.version.outputs.bumped == 'true' && steps.published.outputs.exists == 'false'
+        run: pnpm exec ovsx publish --trusted-publishing
