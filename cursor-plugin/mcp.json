@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "search-by-code-owner": {
+      "command": "node",
+      "args": ["${CURSOR_PLUGIN_ROOT}/mcpServer.js"],
+      "env": {
+        "WORKSPACE_FOLDER": "${workspaceFolder}"
+      }
+    }
+  }
+}

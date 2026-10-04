@@ -2,13 +2,15 @@
 
 ## Goal
 
-Expose CODEOWNERS-aware workspace context to VS Code AI agents through native Language Model tools:
+Expose CODEOWNERS-aware workspace context to AI agents through two adapters:
 
 1. List files assigned to a concrete CODEOWNER.
 2. Search the contents of files assigned to a concrete CODEOWNER.
 3. Discover matching CODEOWNERS names from a partial owner string, including values without the org prefix.
 
 `Unowned` and `Owned by all` are intentionally outside this agent-tool contract. The existing webview can continue to expose those virtual filters for native Search.
+
+The native VS Code adapter is retained for zero-configuration Copilot integration. A standalone stdio MCP adapter provides the same capabilities to MCP-compatible hosts. Cursor does not implement `vscode.lm.registerTool` or `vscode.lm.registerMcpServerDefinitionProvider` for this extension. In Cursor the published VS Code extension registers the bundled server with `vscode.cursor.mcp.registerServer`, which is available to personal Open VSX / Marketplace publishers and does not require Cursor Marketplace approval.
 
 ## Tool contract
 
@@ -37,6 +39,14 @@ VS Code does not provide a stable public API that invokes its built-in text-sear
 
 The existing webview continues to use the native Search UI command for interactive searches. That internal command is not used by the agent tools because it opens UI and does not return result data.
 
+## Third-party host support
+
+Cursor and other VS Code-compatible hosts are not required to implement `vscode.lm.registerTool` or `contributes.languageModelTools`. The published extension ships `out/mcpServer.js` and, in Cursor, registers it on activation through `vscode.cursor.mcp.registerServer` (stdio, `ELECTRON_RUN_AS_NODE`, workspace roots in `WORKSPACE_FOLDER` / `WORKSPACE_ROOTS`). Users can disable that with `codeOwner.mcp.autoRegister`. VS Code hosts that implement `vscode.lm.registerMcpServerDefinitionProvider` use that provider instead. The Cursor Plugin under `cursor-plugin/` remains an optional manual fallback; its `mcp.json` launches the bundled server with `${CURSOR_PLUGIN_ROOT}` and passes `${workspaceFolder}` as `WORKSPACE_FOLDER`. The extension does not write `~/.cursor/mcp.json`.
+
+The MCP server accepts `workspaceRoot` or `workspaceRoots` per call and falls back to `WORKSPACE_FOLDER`, then the server process working directory. It uses direct filesystem enumeration, so VS Code's `files.exclude` and `search.exclude` settings are unavailable to the standalone process. `.gitignore` exclusions are supported, while negated `.gitignore` entries are intentionally skipped for parity with the current extension behavior.
+
+The MCP server does not import `vscode`, open the Search UI, or depend on the webview. Its result payloads use JSON encoded as MCP text content. Native tool names and MCP tool names are kept aligned so prompts can be reused across hosts.
+
 ## Implementation notes
 
 - Tools are registered with `vscode.lm.registerTool` and declared through `contributes.languageModelTools`.
@@ -44,7 +54,9 @@ The existing webview continues to use the native Search UI command for interacti
 - `workspace.findFiles` cancellation is propagated through the Language Model tool cancellation token.
 - VS Code default exclusions are disabled when `useVscodeExcludes` is `false`; explicit `files.exclude` and `search.exclude` entries are also added when it is `true`.
 - `.gitignore` patterns are added through the existing `GitIgnoreService` when `excludeGitIgnore` is `true`.
+- The MCP adapter uses its own Node filesystem adapter and explicit workspace roots; it does not reuse VS Code Search include/exclude globs.
+- In Cursor, `vscode.cursor.mcp.registerServer` registers the bundled stdio server. The VS Code MCP definition provider is used only when that Cursor API is absent.
 
 ## Verification
 
-Compile and lint the extension, then invoke both tools in single-root and multi-root workspaces. Verify concrete-owner selection, last-rule-wins classification, URI deduplication, exclusion toggles, case sensitivity, whole-word matching, regex matching, invalid regex errors, cancellation, and result truncation.
+Compile and lint the extension, then invoke all three native tools in single-root and multi-root workspaces. Run the compiled MCP server over stdio and invoke all three MCP tools against fixture repositories. Verify concrete-owner selection, partial-owner matching, last-rule-wins classification, URI/path results, exclusion toggles, case sensitivity, whole-word matching, regex matching, invalid regex errors, cancellation, and result truncation. Confirm that MCP uses explicit disk roots rather than VS Code display-folder prefixes. In Cursor, confirm the extension registers `search-by-code-owner` without a `mcp.json` edit, that workspace folder changes refresh the registration, and that `codeOwner.mcp.autoRegister` unregisters the server. In VS Code, confirm activation still succeeds when `vscode.cursor` is absent.
