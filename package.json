@@ -200,22 +200,18 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "oxlint src",
     "package": "rm -rf out && vsce package",
     "publish:marketplace": "vsce publish",
     "dev": "code --extensionDevelopmentPath=$(pwd)"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.4",
     "@types/vscode": "^1.103.0",
-    "@typescript-eslint/eslint-plugin": "^8.70.0",
-    "@typescript-eslint/parser": "^8.70.0",
     "@vscode/vsce": "^4.0.0",
-    "eslint": "^10.10.0",
-    "knip": "^6.35.0",
+    "knip": "^6.38.0",
     "ovsx": "^1.2.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.0"
+    "oxlint": "^1.86.0",
+    "typescript": "^7.0.2"
   }
 }

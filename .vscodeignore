@@ -15,7 +15,7 @@ webpack.config.js
 .nvmrc
 .npmrc
 .gitignore
-eslint.config.js
+.oxlintrc.json
 mise.toml
 pnpm-workspace.yaml
 pnpm-lock.yaml

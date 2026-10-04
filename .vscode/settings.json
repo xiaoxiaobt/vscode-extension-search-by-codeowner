@@ -1,12 +1,10 @@
 {
-    "typescript.preferences.includePackageJsonAutoImports": "on",
-    "typescript.suggest.autoImports": true,
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
-    },
-    "cSpell.words": [
-        "CODEOWNERS"
-    ],
-    "npm.packageManager": "pnpm"
+  "js/ts.preferences.includePackageJsonAutoImports": "on",
+  "js/ts.suggest.autoImports": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxlint": "explicit"
+  },
+  "cSpell.words": ["CODEOWNERS"],
+  "npm.packageManager": "pnpm"
 }

@@ -17,6 +17,8 @@ jobs:
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v6
+        env:
+          NPM_CONFIG_FUND: 'false'
         with:
           version: 12.4.1
 
