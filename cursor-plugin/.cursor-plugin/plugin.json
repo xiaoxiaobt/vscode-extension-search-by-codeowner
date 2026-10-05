@@ -1,8 +1,0 @@
-{
-  "name": "search-by-code-owner",
-  "description": "CODEOWNERS-aware file listing and content search tools for Cursor.",
-  "version": "0.2.2",
-  "author": {
-    "name": "TaigeWang"
-  }
-}

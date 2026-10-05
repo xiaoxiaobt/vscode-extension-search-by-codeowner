@@ -212,7 +212,6 @@
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "oxlint src",
-    "cursor:build": "pnpm run compile && mkdir -p cursor-plugin && cp out/mcpServer.js cursor-plugin/mcpServer.js",
     "mcp": "node ./out/mcpServer.js",
     "package": "rm -rf out && vsce package --no-dependencies",
     "publish:marketplace": "vsce publish",

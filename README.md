@@ -16,24 +16,31 @@ The extension contributes three VS Code Language Model tools for agents:
 
 Content search supports case sensitivity, regular expressions, and whole-word matching. Both tools can optionally include `.gitignore` and VS Code-excluded files; both exclusions are enabled by default. `Unowned` and `Owned by all` are not supported by the agent tools.
 
-### Cursor MCP server
+### Cursor MCP server [Experimental]
+
+**This feature is experimental and may not work as expected.**
 
 The extension contributes a Cursor MCP server for agents for similar functionality as the VS Code Language Model tools.
+
+Cursor may still ask you to enable or trust the server in MCP settings. You may need to set required permissions in project or global settings.
+
+For example, you can set the following global settings in `~/.cursor/permissions.json`:
+
+```jsonc
+{
+  "mcpAllowlist": [
+    "other-mcp-servers:*",
+    "search-by-code-owner:*", // Allowlist for the extension's MCP server
+  ],
+}
+```
+
+Set `codeOwner.mcp.autoRegister` to `false` to turn auto-registration off.
 
 ## Settings
 
 - `codeOwner.mcp.autoRegister` (default: `true`): when the extension runs in Cursor, automatically register the bundled CODEOWNERS MCP server. Disable this if you prefer to configure the server yourself.
 - `codeOwner.experimental.multiRootWorkspace` (default: `false`): experimental support for `.code-workspace` files. When enabled and you opened a workspace file with two or more folders, or a single folder that points at a subdirectory (for example `./subFolder`), CODEOWNERS is resolved from the workspace file directory and search include/exclude patterns are rewritten to match VS Code Search roots (including renamed folders). A custom name on a single `.` folder is not rewritten.
-
-## Cursor and other MCP hosts
-
-Install the published VS Code extension in Cursor. On activation it registers the bundled stdio MCP server through Cursor's extension API, so you do not need to edit `mcp.json`. Cursor may still ask you to enable or trust the server in MCP settings. Set `codeOwner.mcp.autoRegister` to `false` to turn auto-registration off.
-
-Native VS Code Language Model tools remain the Copilot/VS Code path. Cursor does not use `vscode.lm.registerTool` or `vscode.lm.registerMcpServerDefinitionProvider` for this extension.
-
-The MCP server exposes `codeOwner_listFiles`, `codeOwner_searchFiles`, and `codeOwner_findMatchingOwners`. It uses explicit filesystem roots and `.gitignore` handling. VS Code `files.exclude` and `search.exclude` settings are only available to the native VS Code tools.
-
-The repository still contains an optional Cursor Plugin under `cursor-plugin/` for local plugin install if you are not using the VS Code extension. Build it with `pnpm run cursor:build`.
 
 ## License
 

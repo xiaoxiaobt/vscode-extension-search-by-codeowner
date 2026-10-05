@@ -9,31 +9,17 @@ import { CodeOwnerAgentTools } from "./agentTools";
 const CURSOR_MCP_SERVER_NAME = "search-by-code-owner";
 const AUTO_REGISTER_SETTING = "codeOwner.mcp.autoRegister";
 
-interface LanguageModelApiShape {
-  registerTool?: unknown;
-  registerMcpServerDefinitionProvider?: unknown;
-}
-
 let registeredCursorServerName: string | undefined;
 
-export function activate(context: ExtensionContext) {
-  // Create the code owner service
+export const activate = (context: ExtensionContext) => {
   const codeOwnerService = new CodeOwnerService();
-
-  // Create the gitignore service
   const gitIgnoreService = new GitIgnoreService();
   const initialized = Promise.all([
     codeOwnerService.initialize(),
     gitIgnoreService.initialize(),
   ]);
 
-  // Register native tools only when the host provides the Language Model API.
-  const languageModelApi = (
-    vscode as unknown as {
-      lm?: LanguageModelApiShape;
-    }
-  ).lm;
-  if (typeof languageModelApi?.registerTool === "function") {
+  if (typeof vscode.lm?.registerTool === "function") {
     new CodeOwnerAgentTools(
       codeOwnerService,
       gitIgnoreService,
@@ -42,69 +28,47 @@ export function activate(context: ExtensionContext) {
   }
 
   if (!registerCursorMcpServer(context)) {
-    registerMcpServer(context, languageModelApi);
+    registerMcpServer(context);
   }
 
-  // Create the search provider with services
   const searchProvider = new CodeOwnerSearchProvider(
     context.extensionUri,
     codeOwnerService,
     gitIgnoreService,
   );
 
-  // Register the webview view provider
   context.subscriptions.push(
     window.registerWebviewViewProvider("codeOwner.searchView", searchProvider),
-  );
-
-  // Listen for active editor changes to update file info
-  context.subscriptions.push(
     window.onDidChangeActiveTextEditor(() => {
       searchProvider.updateActiveFileInfo();
     }),
-  );
-
-  // Also listen for window state changes (helps with binary files)
-  context.subscriptions.push(
     window.onDidChangeWindowState(() => {
       searchProvider.updateActiveFileInfo();
     }),
-  );
-
-  // Register minimal commands
-  const availableCommands = [
     commands.registerCommand("codeOwner.refresh", () => {
       searchProvider.refresh();
     }),
-  ];
+  );
 
-  context.subscriptions.push(...availableCommands);
-
-  // Initialize services
   initialized.then(() => {
     searchProvider.initializeData();
   });
-}
+};
 
-export function deactivate() {
+export const deactivate = () => {
   unregisterCursorMcpServer();
-}
+};
 
-function getWorkspaceRoots(): string[] {
-  return (vscode.workspace.workspaceFolders ?? []).map(
-    (folder) => folder.uri.fsPath,
-  );
-}
+const getWorkspaceRoots = (): string[] =>
+  (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath);
 
-function getMcpProcessEnv(roots: string[]): Record<string, string> {
-  return {
-    ELECTRON_RUN_AS_NODE: "1",
-    WORKSPACE_FOLDER: roots[0] ?? "",
-    WORKSPACE_ROOTS: JSON.stringify(roots),
-  };
-}
+const getMcpProcessEnv = (roots: string[]): Record<string, string> => ({
+  ELECTRON_RUN_AS_NODE: "1",
+  WORKSPACE_FOLDER: roots[0] ?? "",
+  WORKSPACE_ROOTS: JSON.stringify(roots),
+});
 
-function unregisterCursorMcpServer(): void {
+const unregisterCursorMcpServer = (): void => {
   const unregister = vscode.cursor?.mcp?.unregisterServer;
   if (
     typeof unregister !== "function" ||
@@ -123,9 +87,9 @@ function unregisterCursorMcpServer(): void {
   } finally {
     registeredCursorServerName = undefined;
   }
-}
+};
 
-function registerCursorMcpServer(context: ExtensionContext): boolean {
+const registerCursorMcpServer = (context: ExtensionContext): boolean => {
   const cursorMcpApi = vscode.cursor?.mcp;
   if (typeof cursorMcpApi?.registerServer !== "function") {
     return false;
@@ -162,9 +126,7 @@ function registerCursorMcpServer(context: ExtensionContext): boolean {
 
   applyRegistration();
   context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      applyRegistration();
-    }),
+    vscode.workspace.onDidChangeWorkspaceFolders(applyRegistration),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(AUTO_REGISTER_SETTING)) {
         applyRegistration();
@@ -174,44 +136,33 @@ function registerCursorMcpServer(context: ExtensionContext): boolean {
   );
 
   return true;
-}
+};
 
-function registerMcpServer(
-  context: ExtensionContext,
-  languageModelApi: LanguageModelApiShape | undefined,
-): void {
-  if (!languageModelApi) {
-    console.warn("Search by Code Owner: Language Model API unavailable");
-    return;
-  }
-
-  if (
-    typeof languageModelApi.registerMcpServerDefinitionProvider !== "function"
-  ) {
+const registerMcpServer = (context: ExtensionContext): void => {
+  if (typeof vscode.lm?.registerMcpServerDefinitionProvider !== "function") {
     console.warn(
       "Search by Code Owner: MCP server definition provider API unavailable",
     );
     return;
   }
 
-  const roots = getWorkspaceRoots();
-  const register =
-    languageModelApi.registerMcpServerDefinitionProvider as typeof vscode.lm.registerMcpServerDefinitionProvider;
-
   try {
     context.subscriptions.push(
-      register.call(vscode.lm, "search-by-code-owner.mcp", {
-        provideMcpServerDefinitions: async () => [
-          new vscode.McpStdioServerDefinition(
-            "Search by Code Owner",
-            process.execPath,
-            [context.asAbsolutePath("out/mcpServer.js")],
-            getMcpProcessEnv(roots),
-            "0.2.2",
-          ),
-        ],
-        resolveMcpServerDefinition: async (server) => server,
-      }),
+      vscode.lm.registerMcpServerDefinitionProvider(
+        "search-by-code-owner.mcp",
+        {
+          provideMcpServerDefinitions: async () => [
+            new vscode.McpStdioServerDefinition(
+              "Search by Code Owner",
+              process.execPath,
+              [context.asAbsolutePath("out/mcpServer.js")],
+              getMcpProcessEnv(getWorkspaceRoots()),
+              "0.2.2",
+            ),
+          ],
+          resolveMcpServerDefinition: async (server) => server,
+        },
+      ),
     );
     console.info("Search by Code Owner: MCP provider registered");
   } catch (error) {
@@ -220,4 +171,4 @@ function registerMcpServer(
       error,
     );
   }
-}
+};
