@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.2 — 2026-10-07
+
+- Add experimental Cursor MCP server support
+
 ## 0.2.1 — 2026-10-03
 
 - Include license in package.json

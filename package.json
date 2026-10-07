@@ -5,7 +5,7 @@
   "publisher": "TaigeWang",
   "license": "MIT",
   "icon": "media/logo.png",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -175,6 +175,12 @@
         }
       }
     ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "search-by-code-owner.mcp",
+        "label": "Search by Code Owner"
+      }
+    ],
     "menus": {
       "view/title": [
         {
@@ -187,6 +193,11 @@
     "configuration": {
       "title": "Search by Code Owner",
       "properties": {
+        "codeOwner.mcp.autoRegister": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When running in Cursor, automatically register the bundled CODEOWNERS MCP server so agent tools are available without editing `mcp.json`. Disable this if you prefer to configure the server yourself."
+        },
         "codeOwner.experimental.multiRootWorkspace": {
           "type": "boolean",
           "default": false,
@@ -197,21 +208,25 @@
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && esbuild src/mcpServer.ts --bundle --platform=node --format=cjs --outfile=out/mcpServer.js",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "oxlint src",
-    "package": "rm -rf out && vsce package",
+    "mcp": "node ./out/mcpServer.js",
+    "package": "rm -rf out && vsce package --no-dependencies",
     "publish:marketplace": "vsce publish",
     "dev": "code --extensionDevelopmentPath=$(pwd)"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@types/node": "^24.13.4",
     "@types/vscode": "^1.103.0",
     "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
     "knip": "^6.38.0",
     "ovsx": "^1.2.0",
     "oxlint": "^1.86.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "zod": "^4.6.5"
   }
 }
