@@ -18,13 +18,13 @@ jobs:
 
       - uses: pnpm/action-setup@v6
         env:
-          NPM_CONFIG_FUND: 'false'
+          NPM_CONFIG_FUND: "false"
         with:
           version: 12.4.1
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24.18.0
+          node-version: 26.3.0
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
