@@ -5,7 +5,7 @@
   "publisher": "TaigeWang",
   "license": "MIT",
   "icon": "media/logo.png",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -22,7 +22,7 @@
   ],
   "engines": {
     "vscode": "^1.103.0",
-    "node": ">=24.18.0",
+    "node": ">=26.3.0",
     "pnpm": ">=12.4.1"
   },
   "activationEvents": [
@@ -195,7 +195,7 @@
       "properties": {
         "codeOwner.mcp.autoRegister": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "markdownDescription": "When running in Cursor, automatically register the bundled CODEOWNERS MCP server so agent tools are available without editing `mcp.json`. Disable this if you prefer to configure the server yourself."
         },
         "codeOwner.experimental.multiRootWorkspace": {
@@ -219,7 +219,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.32.0",
-    "@types/node": "^24.13.4",
+    "@types/node": "^26.6.4",
     "@types/vscode": "^1.103.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",

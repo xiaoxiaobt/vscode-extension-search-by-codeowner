@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.3 — 2026-10-07
+
+- Disable auto-registration of the bundled CODEOWNERS MCP server
+
 ## 0.2.2 — 2026-10-07
 
 - Add experimental Cursor MCP server support

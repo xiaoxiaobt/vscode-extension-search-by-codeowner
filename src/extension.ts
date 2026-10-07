@@ -100,7 +100,7 @@ const registerCursorMcpServer = (context: ExtensionContext): boolean => {
     if (
       vscode.workspace
         .getConfiguration("codeOwner")
-        .get<boolean>("mcp.autoRegister", true) !== true
+        .get<boolean>("mcp.autoRegister", false) !== true
     ) {
       return;
     }
