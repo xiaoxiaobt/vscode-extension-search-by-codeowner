@@ -5,7 +5,7 @@
   "publisher": "TaigeWang",
   "license": "MIT",
   "icon": "media/logo.png",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"

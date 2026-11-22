@@ -1,0 +1,38 @@
+name: 'Setup and Checks'
+description: 'Sets up pnpm and Node.js, runs lint and typecheck, and detects version bumps'
+
+outputs:
+  bumped:
+    description: 'Whether the extension version was bumped compared to HEAD^'
+    value: ${{ steps.version.outputs.bumped }}
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v6
+      env:
+        NPM_CONFIG_FUND: "false"
+      with:
+        version: 12.4.1
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 26.13.1
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Lint
+      shell: bash
+      run: pnpm run lint
+
+    - name: Typecheck
+      shell: bash
+      run: pnpm run compile
+
+    - name: Detect version bump
+      id: version
+      shell: bash
+      run: node "${{ github.action_path }}/detect-version-bump.cjs"

@@ -1,0 +1,51 @@
+name: 'Publish to Visual Studio Marketplace'
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-marketplace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Setup and Checks
+        id: checks
+        uses: ./.github/actions/setup-and-checks
+
+      - name: Check version is unpublished
+        id: published
+        if: steps.checks.outputs.bumped == 'true'
+        shell: bash
+        run: |
+          publisher=$(node -p "require('./package.json').publisher")
+          extension=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          url="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${publisher}/vsextensions/${extension}/${version}/vspackage"
+          http_status=$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' "$url")
+
+          case "$http_status" in
+            404)
+              echo 'exists=false' >> "$GITHUB_OUTPUT"
+              echo "${publisher}.${extension} ${version} is not published"
+              ;;
+            200)
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              echo "${publisher}.${extension} ${version} is already published"
+              ;;
+            *)
+              echo "Unexpected Marketplace response: HTTP ${http_status}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Publish to Visual Studio Marketplace
+        if: steps.checks.outputs.bumped == 'true' && steps.published.outputs.exists == 'false'
+        run: pnpm exec vsce publish --oidc --no-dependencies

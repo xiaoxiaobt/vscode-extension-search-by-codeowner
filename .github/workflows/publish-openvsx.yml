@@ -16,67 +16,13 @@ jobs:
         with:
           fetch-depth: 2
 
-      - uses: pnpm/action-setup@v6
-        env:
-          NPM_CONFIG_FUND: "false"
-        with:
-          version: 12.4.1
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26.3.0
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Typecheck
-        run: pnpm run compile
-
-      - name: Detect version bump
-        id: version
-        shell: bash
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const { execFileSync } = require('node:child_process');
-
-          const currentVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
-          const previousVersion = JSON.parse(
-            execFileSync('git', ['show', 'HEAD^:package.json'], { encoding: 'utf8' })
-          ).version;
-
-          const parseVersion = (version) => {
-            const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?/);
-            if (!match) {
-              throw new Error(`Invalid extension version: ${version}`);
-            }
-            return [Number(match[1]), Number(match[2]), Number(match[3]), match[4] ?? ''];
-          };
-
-          const compareVersions = (left, right) => {
-            const leftParts = parseVersion(left);
-            const rightParts = parseVersion(right);
-            for (let index = 0; index < 3; index += 1) {
-              if (leftParts[index] !== rightParts[index]) {
-                return leftParts[index] - rightParts[index];
-              }
-            }
-            if (!leftParts[3] && rightParts[3]) return 1;
-            if (leftParts[3] && !rightParts[3]) return -1;
-            return leftParts[3].localeCompare(rightParts[3]);
-          };
-
-          const bumped = compareVersions(currentVersion, previousVersion) > 0;
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `bumped=${bumped}\n`);
-          console.log(`${previousVersion} -> ${currentVersion}; publish=${bumped}`);
-          NODE
+      - name: Setup and Checks
+        id: checks
+        uses: ./.github/actions/setup-and-checks
 
       - name: Check version is unpublished
         id: published
-        if: steps.version.outputs.bumped == 'true'
+        if: steps.checks.outputs.bumped == 'true'
         shell: bash
         run: |
           publisher=$(node -p "require('./package.json').publisher")
@@ -101,5 +47,5 @@ jobs:
           esac
 
       - name: Publish to Open VSX
-        if: steps.version.outputs.bumped == 'true' && steps.published.outputs.exists == 'false'
+        if: steps.checks.outputs.bumped == 'true' && steps.published.outputs.exists == 'false'
         run: pnpm exec ovsx publish --trusted-publishing

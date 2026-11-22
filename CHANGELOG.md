@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.5 — 2026-11-22
+
+- Use trusted publishing for VSCode Marketplace
+
 ## 0.2.4 — 2026-11-22
 
 - Add tests and fix bugs for include/exclude file filters
