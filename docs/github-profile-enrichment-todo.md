@@ -12,9 +12,10 @@
 
 - Find the Git repository containing the selected CODEOWNERS file.
 - Read the current Git branch during initialization or manual refresh.
-- Resolve that branch's configured upstream remote.
+- Resolve that branch's configured remote, falling back to `origin` when the
+  local branch has no upstream.
 - Accept standard SSH and HTTPS remotes only when the hostname is exactly `github.com`.
-- Silently stop enrichment for non-Git repositories, detached HEAD, missing upstreams/remotes, malformed remotes, GitHub Enterprise, and other hosting providers.
+- Silently stop enrichment for non-Git repositories, detached HEAD, missing remotes, malformed remotes, GitHub Enterprise, and other hosting providers.
 - Do not monitor branch changes.
 
 ## 3. Identify eligible personal owners

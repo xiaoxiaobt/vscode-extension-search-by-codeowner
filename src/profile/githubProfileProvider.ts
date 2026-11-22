@@ -48,6 +48,11 @@ export class GitHubProfileProvider implements PublicProfileProvider {
       }
 
       const value = (await response.json()) as Record<string, unknown>;
+      if (value.type !== "User") {
+        return typeof value.type === "string"
+          ? { status: "notFound" }
+          : { status: "transientFailure" };
+      }
       const profile: PublicProfile = {
         username: stringValue(value.login) ?? username,
         name: stringValue(value.name),

@@ -14,6 +14,7 @@ export type ProfileUpdateHandler = (
 interface EligibleOwner {
   username: string;
   normalizedUsername: string;
+  owners: string[];
 }
 
 export class ProfileEnrichmentService {
@@ -29,6 +30,7 @@ export class ProfileEnrichmentService {
     owners: readonly string[],
     codeOwnersFilePath: string,
     onUpdate: ProfileUpdateHandler,
+    shouldContinue: () => boolean = () => true,
   ): Promise<void> {
     const repository =
       await this.repositoryService.resolveForFile(codeOwnersFilePath);
@@ -50,9 +52,6 @@ export class ProfileEnrichmentService {
       onUpdate(new Map());
       return;
     }
-    const commitIdentities = await this.commitIdentityService.load(
-      repository.rootPath,
-    );
     const profiles = new Map<string, PublicProfile>();
     const missing: EligibleOwner[] = [];
 
@@ -65,12 +64,16 @@ export class ProfileEnrichmentService {
       }
     }
 
-    publishProfiles(profiles, commitIdentities, onUpdate);
+    publishProfiles(profiles, eligibleOwners, emptyCommitIdentities, onUpdate);
+    const commitIdentities = await this.commitIdentityService.load(
+      repository.rootPath,
+    );
+    publishProfiles(profiles, eligibleOwners, commitIdentities, onUpdate);
 
     let nextIndex = 0;
     let rateLimited = false;
     const worker = async (): Promise<void> => {
-      while (!rateLimited) {
+      while (!rateLimited && shouldContinue()) {
         const owner = missing[nextIndex++];
         if (!owner) {
           return;
@@ -95,7 +98,7 @@ export class ProfileEnrichmentService {
           result.profile,
         );
         profiles.set(owner.normalizedUsername, result.profile);
-        publishProfiles(profiles, commitIdentities, onUpdate);
+        publishProfiles(profiles, eligibleOwners, commitIdentities, onUpdate);
       }
     };
 
@@ -104,21 +107,32 @@ export class ProfileEnrichmentService {
   }
 }
 
+const emptyCommitIdentities: CommitIdentityLookup = {
+  getName: () => null,
+};
+
 function publishProfiles(
   profiles: ReadonlyMap<string, PublicProfile>,
+  eligibleOwners: readonly EligibleOwner[],
   commitIdentities: CommitIdentityLookup,
   onUpdate: ProfileUpdateHandler,
 ): void {
   const displayProfiles = new Map<string, PublicProfile>();
-  for (const [username, profile] of profiles) {
+  for (const eligibleOwner of eligibleOwners) {
+    const profile = profiles.get(eligibleOwner.normalizedUsername);
+    if (!profile) {
+      continue;
+    }
     const commitName =
       !profile.name && profile.email
         ? commitIdentities.getName(profile.email)
         : null;
-    displayProfiles.set(
-      username,
-      commitName ? { ...profile, name: commitName } : profile,
-    );
+    const displayProfile = commitName
+      ? { ...profile, name: commitName }
+      : profile;
+    for (const owner of eligibleOwner.owners) {
+      displayProfiles.set(owner, displayProfile);
+    }
   }
   onUpdate(displayProfiles);
 }
@@ -135,8 +149,15 @@ function uniqueEligibleOwners(
     }
 
     const normalizedUsername = username.toLowerCase();
-    if (!unique.has(normalizedUsername)) {
-      unique.set(normalizedUsername, { username, normalizedUsername });
+    const existing = unique.get(normalizedUsername);
+    if (existing) {
+      existing.owners.push(owner);
+    } else {
+      unique.set(normalizedUsername, {
+        username,
+        normalizedUsername,
+        owners: [owner],
+      });
     }
   }
   return [...unique.values()];

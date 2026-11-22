@@ -41,6 +41,7 @@ For example, you can set the following global settings in `~/.cursor/permissions
 
 ## Settings
 
+- `searchByCodeOwner.fetchGitHubUserInfo` (default: `false`): show public GitHub names for individual code owners. Fetches public names, emails, usernames, and avatar URLs from GitHub's public API using unauthenticated requests (cached locally in extension storage).
 - `codeOwner.mcp.autoRegister` (default: `false`): when the extension runs in Cursor, automatically register the bundled CODEOWNERS MCP server. Enable this to enable the MCP server
 - `codeOwner.experimental.multiRootWorkspace` (default: `false`): experimental support for `.code-workspace` files. When enabled and you opened a workspace file with two or more folders, or a single folder that points at a subdirectory (for example `./subFolder`), CODEOWNERS is resolved from the workspace file directory and search include/exclude patterns are rewritten to match VS Code Search roots (including renamed folders). A custom name on a single `.` folder is not rewritten.
 

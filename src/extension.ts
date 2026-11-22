@@ -1,10 +1,15 @@
 import * as vscode from "vscode";
 import type { ExtensionContext } from "vscode";
-import { window, commands } from "vscode";
+import { window, commands, workspace } from "vscode";
 import { CodeOwnerSearchProvider } from "./searchProvider";
 import { CodeOwnerService } from "./codeOwnerService";
 import { GitIgnoreService } from "./gitIgnoreService";
 import { CodeOwnerAgentTools } from "./agentTools";
+import { CommitIdentityService } from "./profile/commitIdentityService";
+import { GitHubProfileProvider } from "./profile/githubProfileProvider";
+import { ProfileCache } from "./profile/profileCache";
+import { ProfileEnrichmentService } from "./profile/profileEnrichmentService";
+import { RepositoryService } from "./profile/repositoryService";
 
 const CURSOR_MCP_SERVER_NAME = "search-by-code-owner";
 const AUTO_REGISTER_SETTING = "codeOwner.mcp.autoRegister";
@@ -31,10 +36,18 @@ export const activate = (context: ExtensionContext) => {
     registerMcpServer(context);
   }
 
+  const profileEnrichmentService = new ProfileEnrichmentService(
+    new ProfileCache(context.globalState),
+    new RepositoryService(),
+    [new GitHubProfileProvider()],
+    new CommitIdentityService(),
+  );
+
   const searchProvider = new CodeOwnerSearchProvider(
     context.extensionUri,
     codeOwnerService,
     gitIgnoreService,
+    profileEnrichmentService,
   );
 
   context.subscriptions.push(
@@ -44,6 +57,11 @@ export const activate = (context: ExtensionContext) => {
     }),
     window.onDidChangeWindowState(() => {
       searchProvider.updateActiveFileInfo();
+    }),
+    workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("searchByCodeOwner.fetchGitHubUserInfo")) {
+        searchProvider.updateProfileEnrichment();
+      }
     }),
     commands.registerCommand("codeOwner.refresh", () => {
       searchProvider.refresh();
