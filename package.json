@@ -5,7 +5,7 @@
   "publisher": "TaigeWang",
   "license": "MIT",
   "icon": "media/logo.png",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/xiaoxiaobt/vscode-extension-search-by-codeowner"
@@ -22,7 +22,7 @@
   ],
   "engines": {
     "vscode": "^1.103.0",
-    "node": ">=26.3.0",
+    "node": ">=26.13.1",
     "pnpm": ">=12.4.1"
   },
   "activationEvents": [
@@ -211,6 +211,7 @@
     "compile": "tsc -p ./ && esbuild src/mcpServer.ts --bundle --platform=node --format=cjs --outfile=out/mcpServer.js",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
+    "test": "NODE_PATH=out/test/mocks node --test out/test/**/*.test.js",
     "lint": "oxlint src",
     "mcp": "node ./out/mcpServer.js",
     "package": "rm -rf out && vsce package --no-dependencies",
@@ -218,15 +219,15 @@
     "dev": "code --extensionDevelopmentPath=$(pwd)"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
-    "@types/node": "^26.6.4",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@types/node": "^26.6.6",
     "@types/vscode": "^1.103.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.28.2",
     "knip": "^6.38.0",
-    "ovsx": "^1.2.0",
-    "oxlint": "^1.86.0",
+    "ovsx": "^1.4.0",
+    "oxlint": "^1.94.0",
     "typescript": "^7.0.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   }
 }

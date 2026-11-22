@@ -83,24 +83,33 @@ export class CodeOwnerService {
     }
   }
 
-  private parseCodeOwnersContent(content: string): void {
+  public parseCodeOwnersContent(content: string): void {
     this.codeOwnerRules = [];
     this.allOwners.clear();
 
     const lines = content.split("\n");
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      let line = lines[i].trim();
 
       // Skip empty lines and comments
       if (!line || line.startsWith("#")) {
         continue;
       }
 
-      // Parse the line: pattern followed by owners
+      // Strip inline comments starting with '#'
+      const commentIndex = line.indexOf("#");
+      if (commentIndex !== -1) {
+        line = line.slice(0, commentIndex).trim();
+        if (!line) {
+          continue;
+        }
+      }
+
+      // Parse the line: pattern followed by optional owners
       const parts = line.split(/\s+/);
-      if (parts.length < 2) {
-        continue; // Invalid line
+      if (parts.length === 0 || !parts[0]) {
+        continue;
       }
 
       const pattern = parts[0];
@@ -109,14 +118,17 @@ export class CodeOwnerService {
         .filter((owner) => owner.includes("@"))
         .map((owner) => owner.trim());
 
-      if (owners.length === 0) {
+      // Deduplicate owners on the same line
+      const uniqueOwners = Array.from(new Set(owners));
+
+      if (uniqueOwners.length === 0) {
         // Pattern with no owners means "unowned"
         this.codeOwnerRules.push({ pattern, owners: [] });
       } else {
-        this.codeOwnerRules.push({ pattern, owners });
+        this.codeOwnerRules.push({ pattern, owners: uniqueOwners });
 
         // Add owners to the set of all owners
-        owners.forEach((owner) => this.allOwners.add(owner));
+        uniqueOwners.forEach((owner) => this.allOwners.add(owner));
       }
     }
   }
@@ -324,8 +336,16 @@ export class CodeOwnerService {
       rule.owners.includes(owner),
     );
 
-    // Find all patterns that mention this owner
-    const ownerPatterns = new Set(ownerRules.map((rule) => rule.pattern));
+    // Find all patterns that mention this owner and have not been completely shadowed
+    // by a later rule for the exact same pattern that excluded this owner
+    const activeOwnerRules = ownerRules.filter((rule) => {
+      const lastRuleForPattern = this.codeOwnerRules.findLast(
+        (r) => r.pattern === rule.pattern,
+      );
+      return lastRuleForPattern?.owners.includes(owner);
+    });
+
+    const ownerPatterns = new Set(activeOwnerRules.map((rule) => rule.pattern));
 
     if (ownerPatterns.size === 0) {
       return { includePatterns: [], excludePatterns: [] };
@@ -336,7 +356,7 @@ export class CodeOwnerService {
     // but assigns ownership to different owners (excluding the current owner)
     const excludePatterns = new Set<string>();
 
-    for (const ownerRule of ownerRules) {
+    for (const ownerRule of activeOwnerRules) {
       const overridingPatterns = this.findOverridingPatterns(ownerRule, owner);
       overridingPatterns.forEach((overridingPattern) =>
         excludePatterns.add(overridingPattern),
@@ -390,6 +410,11 @@ export class CodeOwnerService {
       return true;
     }
 
+    // Global wildcard is overridden by any more specific pattern
+    if (earlierPattern === "*" && laterPattern !== "*") {
+      return true;
+    }
+
     // More specific directory path overrides broader pattern
     // e.g., "/api/*.js" overrides "*.js"
     if (
@@ -411,15 +436,16 @@ export class CodeOwnerService {
       return laterPattern.endsWith(extension);
     }
 
-    // Directory pattern is overridden by more specific directory pattern
-    // e.g., "/src/components/*.ts" overrides "/src/*.ts"
+    // Directory pattern is overridden by more specific directory pattern or file in directory
+    // e.g., "/src/components/*.ts" overrides "/src/*.ts", or "/src/special.ts" overrides "/src/"
     if (earlierPattern.includes("/") && laterPattern.includes("/")) {
       const earlierBase = earlierPattern.replace(/\/?\*.*$/, "");
       const laterBase = laterPattern.replace(/\/?\*.*$/, "");
 
+      const earlierDir = earlierBase.endsWith("/") ? earlierBase : earlierBase + "/";
       if (
-        laterBase.startsWith(earlierBase) &&
-        laterBase.length > earlierBase.length
+        laterBase.startsWith(earlierDir) ||
+        laterPattern.startsWith(earlierDir)
       ) {
         return true;
       }
@@ -455,6 +481,10 @@ export class CodeOwnerService {
         return "**/*";
       }
 
+      if (pattern.startsWith("**/")) {
+        return pattern;
+      }
+
       if (pattern.endsWith("/")) {
         const directoryPattern = pattern.startsWith("/")
           ? pattern.slice(1)
@@ -481,6 +511,10 @@ export class CodeOwnerService {
     return excludePatterns.map((pattern) => {
       if (pattern === "*") {
         return "**/*";
+      }
+
+      if (pattern.startsWith("**/")) {
+        return pattern;
       }
 
       if (pattern.endsWith("/")) {

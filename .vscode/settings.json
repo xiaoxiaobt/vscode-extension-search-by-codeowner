@@ -6,5 +6,6 @@
     "source.fixAll.oxlint": "explicit"
   },
   "cSpell.words": ["CODEOWNERS"],
-  "npm.packageManager": "pnpm"
+  "npm.packageManager": "pnpm",
+  "js/ts.preferences.preferTypeOnlyAutoImports": true
 }

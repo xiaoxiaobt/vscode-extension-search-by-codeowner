@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.4 — 2026-11-22
+
+- Add tests and fix bugs for include/exclude file filters
+
 ## 0.2.3 — 2026-10-07
 
 - Disable auto-registration of the bundled CODEOWNERS MCP server

@@ -26,3 +26,5 @@ src/
 docs/
 CODEOWNERS
 .github/
+
+out/test/
