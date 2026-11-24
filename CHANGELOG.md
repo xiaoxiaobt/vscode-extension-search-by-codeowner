@@ -2,6 +2,10 @@
 
 What's new in Search by Code Owner.
 
+## 0.2.6 — 2026-11-25
+
+- Add more tests, fix corner cases
+
 ## 0.2.5 — 2026-11-22
 
 - Use trusted publishing for VSCode Marketplace

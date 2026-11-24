@@ -476,64 +476,78 @@ export class CodeOwnerService {
    * Convert CODEOWNERS patterns to VSCode include patterns
    */
   public generateIncludePatterns(includePatterns: string[]): string[] {
-    return includePatterns.map((pattern) => {
-      if (pattern === "*") {
-        return "**/*";
+    const result: string[] = [];
+    for (const pattern of includePatterns) {
+      const normalized = this.normalizePatternForGlob(pattern);
+      if (normalized) {
+        result.push(normalized);
       }
-
-      if (pattern.startsWith("**/")) {
-        return pattern;
-      }
-
-      if (pattern.endsWith("/")) {
-        const directoryPattern = pattern.startsWith("/")
-          ? pattern.slice(1)
-          : pattern;
-        return directoryPattern + "**/*";
-      }
-
-      if (pattern.startsWith("/")) {
-        return pattern.slice(1);
-      }
-
-      if (pattern.startsWith("*.")) {
-        return "**/" + pattern;
-      }
-
-      return "**/" + pattern;
-    });
+    }
+    return result;
   }
 
   /**
    * Convert CODEOWNERS patterns to VSCode exclude patterns
    */
   public generateExcludePatterns(excludePatterns: string[]): string[] {
-    return excludePatterns.map((pattern) => {
-      if (pattern === "*") {
-        return "**/*";
+    const result: string[] = [];
+    for (const pattern of excludePatterns) {
+      const normalized = this.normalizePatternForGlob(pattern);
+      if (normalized) {
+        result.push(normalized);
       }
+    }
+    return result;
+  }
 
-      if (pattern.startsWith("**/")) {
-        return pattern;
-      }
+  private normalizePatternForGlob(rawPattern: string): string | null {
+    const trimmed = rawPattern.trim();
+    if (!trimmed) {
+      return null;
+    }
 
+    // Collapse multiple consecutive slashes (e.g. //src//index.ts -> /src/index.ts)
+    let pattern = trimmed.replace(/\/+/g, "/");
+
+    // Normalize leading ./ (e.g. ./src/ -> /src/, ./package.json -> /package.json)
+    if (pattern.startsWith("./")) {
+      pattern = "/" + pattern.slice(2);
+    }
+
+    if (pattern === "*") {
+      return "**/*";
+    }
+
+    if (pattern === "/") {
+      return "**/*";
+    }
+
+    if (pattern.startsWith("/**/")) {
+      pattern = pattern.slice(1);
+    }
+
+    if (pattern.startsWith("**/")) {
       if (pattern.endsWith("/")) {
-        const directoryPattern = pattern.startsWith("/")
-          ? pattern.slice(1)
-          : pattern;
-        return directoryPattern + "**/*";
+        return pattern + "**/*";
       }
+      return pattern;
+    }
 
-      if (pattern.startsWith("/")) {
-        return pattern.slice(1);
-      }
+    if (pattern.endsWith("/")) {
+      const isRootAnchored = pattern.startsWith("/");
+      const dirPath = isRootAnchored ? pattern.slice(1) : pattern;
+      return dirPath + "**/*";
+    }
 
-      if (pattern.startsWith("*.")) {
-        return "**/" + pattern;
-      }
+    if (pattern.startsWith("/")) {
+      return pattern.slice(1);
+    }
 
+    if (pattern.startsWith("*.")) {
       return "**/" + pattern;
-    });
+    }
+
+    return "**/" + pattern;
   }
 
   public hasCodeOwnersFile(): boolean {
